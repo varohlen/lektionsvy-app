@@ -13,9 +13,6 @@ catalogs:
       specifier: latest
       version: 0.1.12
 
-overrides:
-  '@untemps/utils': 3.0.0
-
 importers:
 
   .:
@@ -41,9 +38,6 @@ importers:
       '@tiptap/starter-kit':
         specifier: ^3.22.0
         version: 3.22.0
-      '@untemps/svelte-palette':
-        specifier: 5.2.0
-        version: 5.2.0(svelte@5.54.0)
       lucide-svelte:
         specifier: ^0.577.0
         version: 0.577.0(svelte@5.54.0)
@@ -987,27 +981,6 @@ packages:
   '@typescript-eslint/types@8.57.1':
     resolution: {integrity: sha512-S29BOBPJSFUiblEl6RzPPjJt6w25A6XsBqRVDt53tA/tlL8q7ceQNZHTjPeONt/3S7KRI4quk+yP9jK2WjBiPQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-
-  '@untemps/dom-observer@2.1.0':
-    resolution: {integrity: sha512-ggMiuSPIBFEgp645T71djHdRAdhgCfif0Zuxv1hlGc0PQyOxEBihpDM+n7OOLqmedqc9xnMzg9sol2dqsoFRDA==}
-
-  '@untemps/svelte-palette@5.2.0':
-    resolution: {integrity: sha512-+mb7X/oC7PgwFxARK0OTiT6IA/7EA1ErfyZ1DBIpnoiOjfHzmUrR/XotoavH63yrYXtXS7XFNu+NLfTyVwUlDg==}
-    engines: {node: 20.x}
-    peerDependencies:
-      svelte: ^5.0.0
-
-  '@untemps/svelte-use-drop-outside@1.7.0':
-    resolution: {integrity: sha512-pOvBa0+hL/rVKEzclq7TBoHB8Ai+p9+D8/vqW7MHmtxR/ZdX5+aS8zuCK7ZulUfwVTs03NC3S+XDxg2OgAfK2w==}
-    peerDependencies:
-      svelte: ^5.0.0
-
-  '@untemps/svelte-use-tooltip@2.8.0':
-    resolution: {integrity: sha512-rXzYyU1JzKucyjAr4J+byrDUk0eFhwC8ggiitJE/v945OJDjjA29dA2d+DTjyppqlm2ZQZzGHYKY5hrdRKdrAg==}
-
-  '@untemps/utils@3.0.0':
-    resolution: {integrity: sha512-Iv7a1nvbTzk7ho8bry5iN/RYtns4dwNRuTqD49ixq0N3dOpoMIdSlhvVanbxEmRBqtV7MirCBEfScpTjDbo0ag==}
-    engines: {node: '>=14.17'}
 
   '@voidzero-dev/vite-plus-core@0.1.12':
     resolution: {integrity: sha512-j8YNe7A+8JcSoddztf5whvom/yJ7OKUO3Y5a3UoLIUmOL8YEKVv5nPANrxJ7eaFfHJoMnBEwzBpq1YVZ+H3uPA==}
@@ -2336,29 +2309,6 @@ snapshots:
   '@types/trusted-types@2.0.7': {}
 
   '@typescript-eslint/types@8.57.1': {}
-
-  '@untemps/dom-observer@2.1.0': {}
-
-  '@untemps/svelte-palette@5.2.0(svelte@5.54.0)':
-    dependencies:
-      '@untemps/svelte-use-drop-outside': 1.7.0(svelte@5.54.0)
-      '@untemps/svelte-use-tooltip': 2.8.0
-      '@untemps/utils': 3.0.0
-      svelte: 5.54.0
-
-  '@untemps/svelte-use-drop-outside@1.7.0(svelte@5.54.0)':
-    dependencies:
-      '@untemps/dom-observer': 2.1.0
-      '@untemps/utils': 3.0.0
-      svelte: 5.54.0
-
-  '@untemps/svelte-use-tooltip@2.8.0':
-    dependencies:
-      '@untemps/dom-observer': 2.1.0
-      '@untemps/utils': 3.0.0
-      svelte: 3.49.0
-
-  '@untemps/utils@3.0.0': {}
 
   '@voidzero-dev/vite-plus-core@0.1.12(typescript@5.9.3)':
     dependencies:

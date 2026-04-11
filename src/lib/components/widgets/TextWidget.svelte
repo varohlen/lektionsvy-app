@@ -1,6 +1,5 @@
 <script lang="ts">
 	import IntrinsicTextWidgetBase from './IntrinsicTextWidgetBase.svelte';
-	import { PaletteSlot } from '@untemps/svelte-palette';
 	import {
 		TEXT_WIDGET_BACKGROUND_VARIANTS,
 		TEXT_WIDGET_COLOR_VARIANTS,
@@ -243,18 +242,6 @@
 		closePickers();
 	}
 
-	function handlePaletteKeydown(
-		event: KeyboardEvent,
-		callback: () => void
-	) {
-		if (event.key !== 'Enter' && event.key !== ' ') {
-			return;
-		}
-
-		event.preventDefault();
-		callback();
-	}
-
 	function handleColorPaletteSelect(selection: { color: string | null }) {
 		const selectedSwatch = selection.color;
 
@@ -357,34 +344,27 @@
 					<p class="picker-label">Bakgrund</p>
 					<div class="palette-grid">
 						<button
-							class="transparent-swatch"
+							class="palette-swatch palette-swatch--transparent"
+							class:selected={background === 'none'}
 							type="button"
 							aria-label="Ingen bakgrund"
 							title="Ingen"
 							onclick={() => handleBackgroundPaletteSelect({ color: null })}
 						>
-							<span class="transparent-swatch__inner"></span>
+							<span class="palette-swatch__inner palette-swatch__inner--transparent"></span>
 						</button>
 						{#each backgroundPaletteColors as swatch}
-							<div
-								class="palette-slot-wrapper"
-								role="button"
-								tabindex="0"
+							<button
+								class="palette-swatch"
+								class:selected={swatch.value === selectedBackgroundSwatch}
+								style={`--swatch-color:${swatch.value};`}
+								type="button"
 								aria-label={swatch.name}
 								title={swatch.name}
 								onclick={() => handleBackgroundPaletteSelect({ color: swatch.value })}
-								onkeydown={(event) =>
-									handlePaletteKeydown(event, () =>
-										handleBackgroundPaletteSelect({ color: swatch.value })
-									)}
 							>
-								<PaletteSlot
-									color={swatch.value}
-									selected={swatch.value === selectedBackgroundSwatch}
-									aria-label={swatch.name}
-									title={swatch.name}
-								/>
-							</div>
+								<span class="palette-swatch__inner"></span>
+							</button>
 						{/each}
 					</div>
 				</div>
@@ -424,25 +404,17 @@
 					<p class="picker-label">Textfärg</p>
 					<div class="palette-grid">
 						{#each colorPaletteColors as swatch}
-							<div
-								class="palette-slot-wrapper"
-								role="button"
-								tabindex="0"
+							<button
+								class="palette-swatch"
+								class:selected={swatch.value === selectedColorSwatch}
+								style={`--swatch-color:${swatch.value};`}
+								type="button"
 								aria-label={swatch.name}
 								title={swatch.name}
 								onclick={() => handleColorPaletteSelect({ color: swatch.value })}
-								onkeydown={(event) =>
-									handlePaletteKeydown(event, () =>
-										handleColorPaletteSelect({ color: swatch.value })
-									)}
 							>
-								<PaletteSlot
-									color={swatch.value}
-									selected={swatch.value === selectedColorSwatch}
-									aria-label={swatch.name}
-									title={swatch.name}
-								/>
-							</div>
+								<span class="palette-swatch__inner"></span>
+							</button>
 						{/each}
 					</div>
 				</div>
@@ -513,50 +485,47 @@
 		gap: 0.42rem;
 	}
 
-	.palette-slot-wrapper {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: 999px;
-		cursor: pointer;
-	}
-
-	.palette-slot-wrapper:focus-visible {
-		outline: 2px solid color-mix(in srgb, var(--brand-primary-500) 55%, transparent);
-		outline-offset: 2px;
-	}
-
-	:global(.palette-grid [data-testid='__palette-slot__']) {
-		width: 1.15rem;
-		height: 1.15rem;
-		border-radius: 999px;
-		border-color: color-mix(in srgb, var(--text) 14%, transparent);
-		box-shadow: inset 0 0 0 1px color-mix(in srgb, white 16%, transparent);
-	}
-
-	:global(.palette-grid [data-testid='__palette-slot__'].selected) {
-		outline-color: var(--brand-primary-600);
-	}
-
-	.transparent-swatch {
+	.palette-swatch {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		width: 1.15rem;
 		height: 1.15rem;
-		margin-top: 1px;
 		padding: 0;
 		border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
 		border-radius: 999px;
 		background: color-mix(in srgb, var(--surface) 96%, white 4%);
 		cursor: pointer;
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, white 16%, transparent);
 	}
 
-	.transparent-swatch__inner {
+	.palette-swatch:hover {
+		border-color: color-mix(in srgb, var(--text) 24%, transparent);
+	}
+
+	.palette-swatch:focus-visible {
+		outline: 2px solid color-mix(in srgb, var(--brand-primary-500) 55%, transparent);
+		outline-offset: 2px;
+	}
+
+	.palette-swatch.selected {
+		outline: 2px solid var(--brand-primary-600);
+		outline-offset: 2px;
+	}
+
+	.palette-swatch--transparent {
+		margin-top: 1px;
+	}
+
+	.palette-swatch__inner {
 		width: 0.7rem;
 		height: 0.7rem;
 		border-radius: 999px;
+		background: var(--swatch-color);
 		border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+	}
+
+	.palette-swatch__inner--transparent {
 		background-image:
 			linear-gradient(
 				135deg,
