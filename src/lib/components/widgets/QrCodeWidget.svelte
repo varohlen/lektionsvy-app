@@ -273,7 +273,7 @@
 		// Generate generator polynomial
 		let gen = [1];
 		for (let i = 0; i < ecCount; i++) {
-			const newGen = new Array(gen.length + 1).fill(0);
+			const newGen = Array.from({ length: gen.length + 1 }, () => 0);
 			for (let j = 0; j < gen.length; j++) {
 				newGen[j] ^= gen[j];
 				newGen[j + 1] ^= gfMul(gen[j], GF_EXP[i]);
@@ -281,7 +281,7 @@
 			gen = newGen;
 		}
 
-		const msg = [...data, ...new Array(ecCount).fill(0)];
+		const msg = [...data, ...Array.from({ length: ecCount }, () => 0)];
 		for (let i = 0; i < data.length; i++) {
 			const coef = msg[i];
 			if (coef !== 0) {
