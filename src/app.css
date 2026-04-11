@@ -1,37 +1,8 @@
-:root {
-  /* Partille Gymnasium palette */
-  --pg-red-700: #bc163f;
-  --pg-red-600: #dd465b;
-  --pg-red-500: #cf6474;
-  --pg-red-400: #e79195;
-  --pg-red-300: #ecbdca;
-
-  --pg-blue-900: #003b4a;
-  --pg-blue-700: #005f7f;
-  --pg-blue-600: #4d86a0;
-  --pg-blue-500: #6fb0c8;
-  --pg-blue-300: #b9dbe5;
-
-  --pg-orange-700: #b83d25;
-  --pg-orange-600: #d84412;
-  --pg-orange-500: #dc844e;
-  --pg-orange-400: #f8bca0;
-  --pg-orange-300: #f2ceb3;
-
-  --pg-green-700: #2a5235;
-  --pg-green-600: #46763b;
-  --pg-green-500: #769b48;
-  --pg-green-400: #acc280;
-  --pg-green-300: #c2d5a3;
-
-  /* Widget accent colors */
-  --accent-clock: var(--pg-blue-700);
-  --accent-timer: var(--pg-orange-600);
-  --accent-text: var(--pg-green-600);
-  --accent-lesson: var(--pg-red-600);
-  --accent-trelson: var(--pg-blue-500);
-  --accent-logo: var(--pg-blue-300);
-}
+/*
+ * Global resets and base styles.
+ * All brand tokens (colors, fonts, surface) live in the active theme file.
+ * See src/themes/ for available themes.
+ */
 
 html,
 body {
@@ -41,44 +12,8 @@ body {
   overflow: hidden;
 }
 
-body {
-  font-family: "Myriad Pro", "Avenir Next", "Segoe UI", sans-serif;
-  background: #f2f7f8;
-  color: var(--pg-blue-900);
-}
-
 #svelte {
   width: 100%;
   height: 100%;
   overflow: hidden;
-}
-
-.screen-shell {
-  --bg-top: #f0f5f7;
-  --bg-bottom: #e6eef1;
-  --text: var(--pg-blue-900);
-  --muted: rgba(0, 59, 74, 0.68);
-  --border: rgba(0, 59, 74, 0.1);
-  --surface: rgba(255, 255, 255, 0.94);
-  --surface-soft: rgba(255, 255, 255, 0.88);
-  --hint-surface: rgba(255, 255, 255, 0.92);
-  --canvas: transparent;
-  --shadow: 0 4px 24px rgba(0, 59, 74, 0.06), 0 1px 3px rgba(0, 59, 74, 0.04);
-  --orb-left: rgba(185, 219, 229, 0.88);
-  --orb-right: rgba(248, 188, 160, 0.48);
-}
-
-.screen-shell[data-theme="dark"] {
-  --bg-top: #081e28;
-  --bg-bottom: #0a2a38;
-  --text: #f0f6f8;
-  --muted: rgba(240, 246, 248, 0.64);
-  --border: rgba(185, 219, 229, 0.12);
-  --surface: rgba(12, 38, 50, 0.92);
-  --surface-soft: rgba(12, 38, 50, 0.88);
-  --hint-surface: rgba(12, 38, 50, 0.92);
-  --canvas: transparent;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.18), 0 1px 3px rgba(0, 0, 0, 0.12);
-  --orb-left: rgba(111, 176, 200, 0.18);
-  --orb-right: rgba(216, 68, 18, 0.12);
 }

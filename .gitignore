@@ -7,6 +7,11 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
+/dist
+/coverage
+/playwright-report
+/test-results
+.playwright-cli
 
 # OS
 .DS_Store
@@ -21,3 +26,6 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Logs
+*.log

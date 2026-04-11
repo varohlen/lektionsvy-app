@@ -20,11 +20,15 @@
 		offsetX?: string;
 		offsetY?: string;
 		color?: string;
+		background?: string;
+		borderRadius?: string;
 		editable?: boolean;
 		ariaLabel?: string;
 		className?: string;
 		multiline?: boolean;
-		toolbarActions?: import('svelte').Snippet;
+		toolbarActions?: import('svelte').Snippet<
+			[{ horizontal: 'left' | 'right'; vertical: 'top' | 'bottom' }]
+		>;
 		onSelect: () => void;
 		onMoveStart: (event: PointerEvent) => void;
 		onResizeStart: (event: PointerEvent) => void;
@@ -46,13 +50,15 @@
 		selected,
 		value,
 		scaleHeight = h,
-		fontFamily = '"Myriad Pro", "Avenir Next", "Segoe UI", sans-serif',
+		fontFamily = 'var(--font-body)',
 		fontWeight = 700,
 		lineHeight = '0.92',
 		letterSpacing = '-0.035em',
 		offsetX = '0px',
 		offsetY = '0px',
 		color = 'var(--text)',
+		background = 'transparent',
+		borderRadius = '0px',
 		editable = false,
 		ariaLabel = title,
 		className = '',
@@ -74,7 +80,7 @@
 	const fontSize = $derived(`${metrics.fontSize}px`);
 	const padding = $derived(`${metrics.paddingBlock}px ${metrics.paddingInline}px`);
 	const textStyle = $derived(
-		`font-size:${fontSize};padding:${padding};font-family:${fontFamily};font-weight:${fontWeight};line-height:${lineHeight};letter-spacing:${letterSpacing};color:${color};transform:translate(${offsetX}, ${offsetY});`
+		`font-size:${fontSize};padding:${padding};font-family:${fontFamily};font-weight:${fontWeight};line-height:${lineHeight};letter-spacing:${letterSpacing};color:${color};background:${background};border-radius:${borderRadius};transform:translate(${offsetX}, ${offsetY});`
 	);
 
 	function getNormalizedValue(text: string) {

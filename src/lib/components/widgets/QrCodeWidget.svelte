@@ -522,7 +522,7 @@
 	}
 
 	.qr-input:focus {
-		border-color: var(--pg-blue-500);
+		border-color: var(--brand-primary-500);
 	}
 
 	.qr-apply {
@@ -530,7 +530,7 @@
 		padding: 0 0.65rem;
 		border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
 		border-radius: 0.3rem;
-		background: color-mix(in srgb, var(--pg-blue-500) 12%, transparent);
+		background: color-mix(in srgb, var(--brand-primary-500) 12%, transparent);
 		color: var(--text);
 		font: inherit;
 		font-size: 0.78rem;
@@ -539,6 +539,6 @@
 	}
 
 	.qr-apply:hover {
-		background: color-mix(in srgb, var(--pg-blue-500) 22%, transparent);
+		background: color-mix(in srgb, var(--brand-primary-500) 22%, transparent);
 	}
 </style>

@@ -226,12 +226,12 @@
 <style>
     .timer-layout {
         --timer-scale: 1;
-        --timer-orange-base: #fbe1d4;
-        --timer-orange-primary: #dc844e;
-        --timer-orange-strong: #d84412;
-        --timer-active-surface: rgba(248, 188, 160, 0.44);
-        --timer-active-border: rgba(216, 68, 18, 0.18);
-        --timer-active-text: #b83d25;
+        --timer-orange-base: color-mix(in srgb, var(--brand-warm-400) 30%, white);
+        --timer-orange-primary: var(--brand-warm-500);
+        --timer-orange-strong: var(--brand-warm-600);
+        --timer-active-surface: color-mix(in srgb, var(--brand-warm-400) 44%, transparent);
+        --timer-active-border: color-mix(in srgb, var(--brand-warm-600) 18%, transparent);
+        --timer-active-text: var(--brand-warm-700);
         --timer-digit-column: calc(2.76rem * var(--timer-scale));
         --timer-separator-column: calc(1.34rem * var(--timer-scale));
 
@@ -242,10 +242,10 @@
     }
 
     :global(.screen-shell[data-theme="dark"]) .timer-layout {
-        --timer-orange-base: rgba(248, 188, 160, 0.18);
-        --timer-active-surface: rgba(216, 68, 18, 0.18);
-        --timer-active-border: rgba(248, 188, 160, 0.24);
-        --timer-active-text: #f8bca0;
+        --timer-orange-base: color-mix(in srgb, var(--brand-warm-400) 18%, transparent);
+        --timer-active-surface: color-mix(in srgb, var(--brand-warm-600) 18%, transparent);
+        --timer-active-border: color-mix(in srgb, var(--brand-warm-400) 24%, transparent);
+        --timer-active-text: var(--brand-warm-400);
     }
 
     .timer-header {

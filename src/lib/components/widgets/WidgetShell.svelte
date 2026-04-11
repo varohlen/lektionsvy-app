@@ -16,9 +16,11 @@
 		onResizeStart: (event: PointerEvent) => void;
 		onBringForward: () => void;
 		onSendBackward: () => void;
-		onDelete?: () => void;
-		toolbarActions?: import('svelte').Snippet;
-		children: import('svelte').Snippet;
+	onDelete?: () => void;
+	toolbarActions?: import('svelte').Snippet<
+		[{ horizontal: 'left' | 'right'; vertical: 'top' | 'bottom' }]
+	>;
+	children: import('svelte').Snippet;
 	};
 
 	let {
@@ -139,7 +141,10 @@
 			<span class="widget-title">{title}</span>
 			<div class="widget-actions">
 				{#if toolbarActions}
-					{@render toolbarActions()}
+					{@render toolbarActions({
+						horizontal: toolbarHorizontal,
+						vertical: toolbarVertical
+					})}
 				{/if}
 				<button
 					class="toolbar-button"
@@ -205,7 +210,7 @@
 
 	.widget.selected {
 		box-shadow:
-			0 0 0 2px color-mix(in srgb, var(--pg-blue-500) 52%, transparent),
+			0 0 0 2px color-mix(in srgb, var(--brand-primary-500) 52%, transparent),
 			var(--shadow);
 	}
 
@@ -222,7 +227,7 @@
 	}
 
 	.widget.frameless.selected {
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--pg-blue-500) 52%, transparent);
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-primary-500) 52%, transparent);
 		border-radius: 0.75rem;
 	}
 

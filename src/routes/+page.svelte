@@ -16,6 +16,11 @@
     import TrelsonWidget from "$lib/components/widgets/TrelsonWidget.svelte";
     import {
         config as themeConfig,
+        TEXT_WIDGET_BACKGROUND_VARIANTS,
+        TEXT_WIDGET_COLOR_VARIANTS,
+        TEXT_WIDGET_FONT_VARIANTS,
+        type TextWidgetBackgroundVariant,
+        type TextWidgetColorVariant,
         type TextWidgetFontVariant,
     } from "$lib/theme";
     import { onMount } from "svelte";
@@ -68,6 +73,8 @@
         z: number;
         textValue?: string;
         textFont?: TextWidgetFontVariant;
+        textBackground?: TextWidgetBackgroundVariant;
+        textColor?: TextWidgetColorVariant;
         timerDuration?: number;
         timerRemaining?: number;
         timerRunning?: boolean;
@@ -93,14 +100,30 @@
         startW: number;
         startH: number;
     };
+    type BoardSize = {
+        width: number;
+        height: number;
+    };
+    type PersistedBoardState = {
+        version: 1;
+        theme: Theme;
+        showGrid: boolean;
+        snapToGrid: boolean;
+        widgets: WidgetInstance[];
+    };
 
     const INITIAL_BOARD_WIDTH = 1366;
     const INITIAL_BOARD_HEIGHT = 768;
     const GRID_SIZE = 16;
+    const STORAGE_KEY = "lektionsvy.board.v1";
+    const STORAGE_SAVE_DELAY_MS = 180;
     const TRELSON_EDIT_SECTION_COUNT = 5;
     const TRELSON_SECTION_SCALE = 0.155;
     const TRELSON_SECTION_GAP_FACTOR = 0.18;
     const trelsonEnabled = themeConfig.features.trelson;
+    const textWidgetFontVariants = [...TEXT_WIDGET_FONT_VARIANTS];
+    const textWidgetBackgroundVariants = [...TEXT_WIDGET_BACKGROUND_VARIANTS];
+    const textWidgetColorVariants = [...TEXT_WIDGET_COLOR_VARIANTS];
 
     const widgetLabels: Record<WidgetType, string> = {
         logo: "Logga",
@@ -121,9 +144,18 @@
         WidgetType,
         { status: WidgetReadiness; note?: string }
     > = {
-        logo: { status: "ready", note: "Visar skolans logotyp som fristående widget." },
-        date: { status: "ready", note: "Datumrad som skalar efter innehållet." },
-        digital: { status: "ready", note: "Stor digital klocka för klassrummet." },
+        logo: {
+            status: "ready",
+            note: "Visar skolans logotyp som fristående widget.",
+        },
+        date: {
+            status: "ready",
+            note: "Datumrad som skalar efter innehållet.",
+        },
+        digital: {
+            status: "ready",
+            note: "Stor digital klocka för klassrummet.",
+        },
         lcd: { status: "ready", note: "Retro 7-segment LCD-display." },
         text: {
             status: "ready",
@@ -194,8 +226,8 @@
 
     const widgetDefaults: Record<WidgetType, WidgetDefaultLayout> = {
         logo: {
-            x: 0.02,
-            y: 0.91,
+            x: 0.01,
+            y: 0.93,
             w: 0.15,
             z: 1,
             visible: true,
@@ -282,9 +314,9 @@
             visible: false,
         },
     };
-    const enabledWidgetTypes = (Object.keys(widgetDefaults) as WidgetType[]).filter(
-        (type) => trelsonEnabled || type !== "trelson",
-    );
+    const enabledWidgetTypes = (
+        Object.keys(widgetDefaults) as WidgetType[]
+    ).filter((type) => trelsonEnabled || type !== "trelson");
 
     let widgetIdCounter = 0;
     const defaultTrelsonPins: TrelsonPins = {
@@ -299,6 +331,13 @@
         return `${type}-${widgetIdCounter}`;
     }
 
+    function setWidgetIdCounterFromWidgets(instances: WidgetInstance[]) {
+        widgetIdCounter = instances.reduce((maxId, widget) => {
+            const suffix = Number(widget.id.match(/-(\d+)$/)?.[1] ?? 0);
+            return Math.max(maxId, suffix);
+        }, 0);
+    }
+
     let boardElement = $state<HTMLElement | null>(null);
     let now = $state(new Date());
     let theme = $state<Theme>("light");
@@ -311,6 +350,8 @@
     let selectedWidgetId = $state<string | null>(null);
     let dragState = $state<DragState | null>(null);
     let resizeState = $state<ResizeState | null>(null);
+    let lastBoardSize = $state<BoardSize | null>(null);
+    let storageReady = false;
     let widgets = $state<WidgetInstance[]>(
         createInitialWidgets(INITIAL_BOARD_WIDTH, INITIAL_BOARD_HEIGHT),
     );
@@ -347,12 +388,24 @@
         };
     }
 
+    function clamp(value: number, min: number, max: number) {
+        return Math.min(Math.max(value, min), max);
+    }
+
     function getTopZ() {
         return widgets.reduce((maxZ, widget) => Math.max(maxZ, widget.z), 0);
     }
 
     function findWidget(id: string) {
         return widgets.find((widget) => widget.id === id);
+    }
+
+    function getPersistedTrelsonSectionCount(widget: WidgetInstance) {
+        const filledCount = Object.values(
+            widget.trelsonPins ?? defaultTrelsonPins,
+        ).filter((value) => value.trim().length > 0).length;
+
+        return Math.max(1, 1 + filledCount);
     }
 
     function createWidgetInstance(
@@ -365,7 +418,9 @@
         },
     ): WidgetInstance {
         if (!enabledWidgetTypes.includes(type)) {
-            throw new Error(`Widget type "${type}" is disabled in the active theme.`);
+            throw new Error(
+                `Widget type "${type}" is disabled in the active theme.`,
+            );
         }
 
         const widget = widgetDefaults[type];
@@ -419,6 +474,8 @@
         if (type === "text") {
             instance.textValue = "Skriv rubrik";
             instance.textFont = themeConfig.textWidget.defaultFont;
+            instance.textBackground = themeConfig.textWidget.defaultBackground;
+            instance.textColor = themeConfig.textWidget.defaultColor;
         }
 
         if (type === "bodyText") {
@@ -450,11 +507,244 @@
 
         if (type === "trelson") {
             instance.trelsonPins = { ...defaultTrelsonPins };
-            instance.h = getTrelsonHeight(instance.w, TRELSON_EDIT_SECTION_COUNT);
+            instance.h = getTrelsonHeight(
+                instance.w,
+                TRELSON_EDIT_SECTION_COUNT,
+            );
         }
 
         return instance;
     }
+
+    function restoreWidgetInstance(
+        widget: Partial<WidgetInstance>,
+        boardWidth: number,
+        boardHeight: number,
+    ): WidgetInstance | null {
+        if (!widget.type || !enabledWidgetTypes.includes(widget.type)) {
+            return null;
+        }
+
+        const restored = {
+            ...createWidgetInstance(widget.type, boardWidth, boardHeight, {
+                useDefaultZ: true,
+            }),
+            ...widget,
+            id:
+                typeof widget.id === "string" && widget.id.length > 0
+                    ? widget.id
+                    : nextWidgetId(widget.type),
+            type: widget.type,
+        } satisfies WidgetInstance;
+
+        const constraints = widgetConstraints[restored.type];
+
+        restored.w = clamp(
+            Number(restored.w) || constraints.minW,
+            constraints.minW,
+            boardWidth,
+        );
+
+        if (restored.type === "trelson") {
+            restored.h = getTrelsonHeight(
+                restored.w,
+                getPersistedTrelsonSectionCount(restored),
+            );
+        } else if (constraints.keepAspect && constraints.aspectRatio) {
+            restored.h = restored.w / constraints.aspectRatio;
+        } else {
+            restored.h = clamp(
+                Number(restored.h) || constraints.minH,
+                constraints.minH,
+                boardHeight,
+            );
+        }
+
+        const maxX = Math.max(0, boardWidth - restored.w);
+        const maxY = Math.max(0, boardHeight - restored.h);
+
+        restored.x = clamp(Number(restored.x) || 0, 0, maxX);
+        restored.y = clamp(Number(restored.y) || 0, 0, maxY);
+        restored.z = Math.max(1, Math.floor(Number(restored.z) || 1));
+
+        if (constraints.autoWidth) {
+            restored.scaleH = clamp(
+                Number(restored.scaleH ?? restored.h) || restored.h,
+                constraints.minH,
+                boardHeight,
+            );
+        }
+
+        if (restored.type === "timer") {
+            restored.timerDuration = clamp(
+                Math.floor(Number(restored.timerDuration) || 15 * 60),
+                0,
+                359999,
+            );
+            restored.timerRemaining = clamp(
+                Math.floor(
+                    Number(restored.timerRemaining) || restored.timerDuration,
+                ),
+                0,
+                restored.timerDuration,
+            );
+            restored.timerRunning = false;
+        }
+
+        if (restored.type === "lessonTimer") {
+            restored.lessonTimerDurationMinutes = clamp(
+                Math.floor(Number(restored.lessonTimerDurationMinutes) || 60),
+                0,
+                120,
+            );
+            restored.lessonTimerRemaining = clamp(
+                Math.floor(
+                    Number(
+                        restored.lessonTimerRemaining ??
+                            restored.lessonTimerDurationMinutes * 60,
+                    ),
+                ) || 0,
+                0,
+                restored.lessonTimerDurationMinutes * 60,
+            );
+            restored.lessonTimerRunning = false;
+        }
+
+        if (restored.type === "stopwatch") {
+            restored.stopwatchStartTime = null;
+            restored.stopwatchRunning = false;
+            restored.stopwatchAccumulated = Math.max(
+                0,
+                Math.floor(Number(restored.stopwatchAccumulated) || 0),
+            );
+            restored.stopwatchLaps = Array.isArray(restored.stopwatchLaps)
+                ? restored.stopwatchLaps
+                      .map((lap) => Math.max(0, Math.floor(Number(lap) || 0)))
+                      .filter((lap) => lap > 0)
+                : [];
+        }
+
+        if (restored.type === "text") {
+            restored.textFont = textWidgetFontVariants.includes(
+                restored.textFont ?? themeConfig.textWidget.defaultFont,
+            )
+                ? (restored.textFont as TextWidgetFontVariant)
+                : themeConfig.textWidget.defaultFont;
+            restored.textBackground = textWidgetBackgroundVariants.includes(
+                restored.textBackground ??
+                    themeConfig.textWidget.defaultBackground,
+            )
+                ? (restored.textBackground as TextWidgetBackgroundVariant)
+                : themeConfig.textWidget.defaultBackground;
+            restored.textColor = textWidgetColorVariants.includes(
+                restored.textColor ?? themeConfig.textWidget.defaultColor,
+            )
+                ? (restored.textColor as TextWidgetColorVariant)
+                : themeConfig.textWidget.defaultColor;
+        }
+
+        if (restored.type === "qrcode") {
+            restored.qrValue =
+                typeof restored.qrValue === "string" ? restored.qrValue : "";
+        }
+
+        if (restored.type === "trelson") {
+            restored.trelsonPins = {
+                ...defaultTrelsonPins,
+                ...restored.trelsonPins,
+            };
+        }
+
+        return restored;
+    }
+
+    function loadPersistedBoardState(
+        boardWidth: number,
+        boardHeight: number,
+    ): PersistedBoardState | null {
+        try {
+            const raw = window.localStorage.getItem(STORAGE_KEY);
+
+            if (!raw) return null;
+
+            const parsed = JSON.parse(raw) as Partial<PersistedBoardState>;
+
+            if (parsed.version !== 1 || !Array.isArray(parsed.widgets)) {
+                return null;
+            }
+
+            const restoredWidgets = parsed.widgets
+                .map((widget) =>
+                    restoreWidgetInstance(widget, boardWidth, boardHeight),
+                )
+                .filter((widget): widget is WidgetInstance => widget !== null)
+                .sort((a, b) => a.z - b.z);
+
+            return {
+                version: 1,
+                theme: parsed.theme === "dark" ? "dark" : "light",
+                showGrid: Boolean(parsed.showGrid),
+                snapToGrid: Boolean(parsed.snapToGrid),
+                widgets:
+                    restoredWidgets.length > 0
+                        ? restoredWidgets
+                        : createInitialWidgets(boardWidth, boardHeight),
+            };
+        } catch (error) {
+            console.warn("Failed to load saved board state", error);
+            return null;
+        }
+    }
+
+    function savePersistedBoardState(snapshot: PersistedBoardState) {
+        try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+        } catch (error) {
+            console.warn("Failed to save board state", error);
+        }
+    }
+
+    function createPersistedBoardSnapshot(): PersistedBoardState {
+        return {
+            version: 1,
+            theme,
+            showGrid,
+            snapToGrid,
+            widgets: widgets.map((widget) => ({
+                ...widget,
+                stopwatchLaps: widget.stopwatchLaps
+                    ? [...widget.stopwatchLaps]
+                    : undefined,
+                trelsonPins: widget.trelsonPins
+                    ? { ...widget.trelsonPins }
+                    : undefined,
+            })),
+        };
+    }
+
+    function flushPersistedBoardState() {
+        if (!storageReady || typeof window === "undefined") {
+            return;
+        }
+
+        savePersistedBoardState(createPersistedBoardSnapshot());
+    }
+
+    $effect(() => {
+        if (!storageReady || typeof window === "undefined") {
+            return;
+        }
+
+        const snapshot = createPersistedBoardSnapshot();
+
+        const timeoutId = window.setTimeout(() => {
+            savePersistedBoardState(snapshot);
+        }, STORAGE_SAVE_DELAY_MS);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    });
 
     function createInitialWidgets(
         boardWidth = INITIAL_BOARD_WIDTH,
@@ -474,7 +764,9 @@
         if (!enabledWidgetTypes.includes(type)) return;
 
         const { width, height } = getBoardSize();
-        const offsetIndex = widgets.filter((widget) => widget.type === type).length;
+        const offsetIndex = widgets.filter(
+            (widget) => widget.type === type,
+        ).length;
         const nextWidget = createWidgetInstance(type, width, height, {
             offsetIndex,
         });
@@ -491,9 +783,9 @@
         if (widget.type !== "trelson") return 0;
         if (selected) return TRELSON_EDIT_SECTION_COUNT;
 
-        const filledCount = Object.values(widget.trelsonPins ?? defaultTrelsonPins).filter(
-            (value) => value.trim().length > 0,
-        ).length;
+        const filledCount = Object.values(
+            widget.trelsonPins ?? defaultTrelsonPins,
+        ).filter((value) => value.trim().length > 0).length;
 
         return Math.max(1, 1 + filledCount);
     }
@@ -700,14 +992,36 @@
     function toggleTextWidgetFont(id: string) {
         const widget = findWidget(id);
         if (!widget || widget.type !== "text") return;
+        const currentIndex = textWidgetFontVariants.indexOf(
+            widget.textFont ?? themeConfig.textWidget.defaultFont,
+        );
+        const nextIndex = (currentIndex + 1) % textWidgetFontVariants.length;
 
-        widget.textFont = widget.textFont === "body" ? "display" : "body";
+        widget.textFont = textWidgetFontVariants[nextIndex];
+        widgets = [...widgets];
+    }
+
+    function setTextWidgetBackground(
+        id: string,
+        background: TextWidgetBackgroundVariant,
+    ) {
+        const widget = findWidget(id);
+        if (!widget || widget.type !== "text") return;
+        widget.textBackground = background;
+        widgets = [...widgets];
+    }
+
+    function setTextWidgetColor(id: string, color: TextWidgetColorVariant) {
+        const widget = findWidget(id);
+        if (!widget || widget.type !== "text") return;
+        widget.textColor = color;
         widgets = [...widgets];
     }
 
     function updateTextWidgetValue(id: string, value: string) {
         const widget = findWidget(id);
-        if (!widget || (widget.type !== "text" && widget.type !== "bodyText")) return;
+        if (!widget || (widget.type !== "text" && widget.type !== "bodyText"))
+            return;
 
         widget.textValue = value;
         widgets = [...widgets];
@@ -739,6 +1053,31 @@
         if (snapToGrid) {
             showGrid = true;
         }
+    }
+
+    function resetBoard() {
+        if (
+            !window.confirm(
+                "Återställ tavlan till standardlayout? Alla lokalt sparade ändringar försvinner.",
+            )
+        ) {
+            return;
+        }
+
+        const { width, height } = getBoardSize();
+
+        window.localStorage.removeItem(STORAGE_KEY);
+        widgets = createInitialWidgets(width, height);
+        setWidgetIdCounterFromWidgets(widgets);
+        theme = "light";
+        showGrid = false;
+        snapToGrid = false;
+        selectedWidgetId = null;
+        dragState = null;
+        resizeState = null;
+        addMenuOpen = false;
+        settingsOpen = false;
+        flushPersistedBoardState();
     }
 
     function toggleAddMenu() {
@@ -923,7 +1262,8 @@
                 }
 
                 widget.scaleH = nextH;
-                widget.h = widget.type === "text" ? Math.max(nextH, widget.h) : nextH;
+                widget.h =
+                    widget.type === "text" ? Math.max(nextH, widget.h) : nextH;
                 widget.w = nextW;
                 widgets = [...widgets];
                 return;
@@ -1001,7 +1341,10 @@
         }
     }
 
-    function syncIntrinsicSize(id: string, size: { width: number; height: number }) {
+    function syncIntrinsicSize(
+        id: string,
+        size: { width: number; height: number },
+    ) {
         const widget = findWidget(id);
         if (!widget || !boardElement) return;
 
@@ -1030,6 +1373,140 @@
         widgets = [...widgets];
     }
 
+    function rescaleWidgetsForBoardSize(
+        previousWidth: number,
+        previousHeight: number,
+        nextWidth: number,
+        nextHeight: number,
+    ) {
+        if (
+            widgets.length === 0 ||
+            previousWidth <= 0 ||
+            previousHeight <= 0 ||
+            nextWidth <= 0 ||
+            nextHeight <= 0
+        ) {
+            return;
+        }
+
+        const widthRatio = nextWidth / previousWidth;
+        const heightRatio = nextHeight / previousHeight;
+
+        if (
+            Math.abs(widthRatio - 1) < 0.001 &&
+            Math.abs(heightRatio - 1) < 0.001
+        ) {
+            return;
+        }
+
+        widgets = widgets.map((widget) => {
+            const constraints = widgetConstraints[widget.type];
+            const nextWidget = { ...widget };
+
+            if (widget.type === "trelson") {
+                let nextW = clamp(widget.w, constraints.minW, nextWidth);
+                let nextH = getTrelsonHeight(
+                    nextW,
+                    getTrelsonSectionCount(
+                        widget,
+                        selectedWidgetId === widget.id,
+                    ),
+                );
+
+                if (nextH > nextHeight) {
+                    nextH = nextHeight;
+                    nextW = Math.max(
+                        constraints.minW,
+                        Math.min(
+                            getTrelsonWidthFromHeight(
+                                nextH,
+                                getTrelsonSectionCount(
+                                    widget,
+                                    selectedWidgetId === widget.id,
+                                ),
+                            ),
+                            nextWidth,
+                        ),
+                    );
+                    nextH = getTrelsonHeight(
+                        nextW,
+                        getTrelsonSectionCount(
+                            widget,
+                            selectedWidgetId === widget.id,
+                        ),
+                    );
+                }
+
+                nextWidget.w = nextW;
+                nextWidget.h = nextH;
+            } else if (constraints.autoWidth) {
+                const nextScaleH = clamp(
+                    widget.scaleH ?? widget.h,
+                    constraints.minH,
+                    nextHeight,
+                );
+
+                nextWidget.scaleH = nextScaleH;
+                nextWidget.w = clamp(widget.w, constraints.minW, nextWidth);
+                nextWidget.h =
+                    widget.type === "text"
+                        ? Math.max(nextScaleH, Math.min(widget.h, nextHeight))
+                        : nextScaleH;
+            } else if (constraints.keepAspect && constraints.aspectRatio) {
+                const fitRatio = Math.min(
+                    nextWidth / widget.w,
+                    nextHeight / widget.h,
+                    1,
+                );
+                let nextW = widget.w * fitRatio;
+                let nextH = widget.h * fitRatio;
+
+                nextWidget.w = Math.max(constraints.minW, nextW);
+                nextWidget.h = Math.max(constraints.minH, nextH);
+            } else {
+                nextWidget.w = clamp(widget.w, constraints.minW, nextWidth);
+                nextWidget.h = clamp(widget.h, constraints.minH, nextHeight);
+            }
+
+            nextWidget.x = clamp(
+                widget.x * widthRatio,
+                0,
+                Math.max(0, nextWidth - nextWidget.w),
+            );
+            nextWidget.y = clamp(
+                widget.y * heightRatio,
+                0,
+                Math.max(0, nextHeight - nextWidget.h),
+            );
+
+            return nextWidget;
+        });
+    }
+
+    function syncBoardSizeAndLayout() {
+        if (!boardElement) return;
+
+        const rect = boardElement.getBoundingClientRect();
+        const nextBoardSize = {
+            width: rect.width,
+            height: rect.height,
+        };
+        const previousBoardSize = lastBoardSize;
+
+        lastBoardSize = nextBoardSize;
+
+        if (!previousBoardSize || dragState || resizeState) {
+            return;
+        }
+
+        rescaleWidgetsForBoardSize(
+            previousBoardSize.width,
+            previousBoardSize.height,
+            nextBoardSize.width,
+            nextBoardSize.height,
+        );
+    }
+
     function stopDrag() {
         dragState = null;
         resizeState = null;
@@ -1044,10 +1521,40 @@
     }
 
     onMount(() => {
+        let boardResizeObserver: ResizeObserver | null = null;
+
         if (boardElement) {
             const rect = boardElement.getBoundingClientRect();
-            widgets = createInitialWidgets(rect.width, rect.height);
+            const persistedState = loadPersistedBoardState(
+                rect.width,
+                rect.height,
+            );
+
+            if (persistedState) {
+                theme = persistedState.theme;
+                showGrid = persistedState.showGrid || persistedState.snapToGrid;
+                snapToGrid = persistedState.snapToGrid;
+                widgets = persistedState.widgets;
+            } else {
+                widgets = createInitialWidgets(rect.width, rect.height);
+            }
+
+            setWidgetIdCounterFromWidgets(widgets);
+            lastBoardSize = {
+                width: rect.width,
+                height: rect.height,
+            };
+            boardResizeObserver = new ResizeObserver(() => {
+                syncBoardSizeAndLayout();
+            });
+            boardResizeObserver.observe(boardElement);
         }
+
+        storageReady = true;
+
+        const handlePageHide = () => {
+            flushPersistedBoardState();
+        };
 
         const interval = window.setInterval(() => {
             now = new Date();
@@ -1096,16 +1603,22 @@
 
         window.addEventListener("pointermove", handlePointerMove);
         window.addEventListener("pointerup", stopDrag);
+        window.addEventListener("pagehide", handlePageHide);
+        window.addEventListener("beforeunload", handlePageHide);
         document.addEventListener("fullscreenchange", handleFullscreenChange);
 
         return () => {
+            flushPersistedBoardState();
             window.clearInterval(interval);
             window.removeEventListener("pointermove", handlePointerMove);
             window.removeEventListener("pointerup", stopDrag);
+            window.removeEventListener("pagehide", handlePageHide);
+            window.removeEventListener("beforeunload", handlePageHide);
             document.removeEventListener(
                 "fullscreenchange",
                 handleFullscreenChange,
             );
+            boardResizeObserver?.disconnect();
         };
     });
 </script>
@@ -1132,6 +1645,7 @@
             {theme}
             {showGrid}
             {snapToGrid}
+            onResetBoard={resetBoard}
             onToggleTheme={toggleTheme}
             onToggleShowGrid={toggleShowGrid}
             onToggleSnapToGrid={toggleSnapToGrid}
@@ -1243,9 +1757,18 @@
                         scaleHeight={widget.scaleH ?? widget.h}
                         z={widget.z}
                         selected={selectedWidgetId === widget.id}
+                        isDark={theme === "dark"}
                         value={widget.textValue ?? "Skriv rubrik"}
-                        font={widget.textFont ?? themeConfig.textWidget.defaultFont}
+                        font={widget.textFont ??
+                            themeConfig.textWidget.defaultFont}
+                        background={widget.textBackground ??
+                            themeConfig.textWidget.defaultBackground}
+                        color={widget.textColor ??
+                            themeConfig.textWidget.defaultColor}
                         fontLabels={themeConfig.textWidget.fontLabels}
+                        backgroundLabels={themeConfig.textWidget
+                            .backgroundLabels}
+                        colorLabels={themeConfig.textWidget.colorLabels}
                         onMeasure={(size) => syncIntrinsicSize(widget.id, size)}
                         onSelect={() => selectWidget(widget.id)}
                         onMoveStart={(event) => startDrag(event, widget.id)}
@@ -1256,6 +1779,10 @@
                             moveWidgetLayer(widget.id, "backward")}
                         onDelete={() => removeWidget(widget.id)}
                         onToggleFont={() => toggleTextWidgetFont(widget.id)}
+                        onBackgroundSelect={(background) =>
+                            setTextWidgetBackground(widget.id, background)}
+                        onColorSelect={(color) =>
+                            setTextWidgetColor(widget.id, color)}
                         onValueChange={(value) =>
                             updateTextWidgetValue(widget.id, value)}
                     />
@@ -1287,8 +1814,10 @@
                         h={widget.h}
                         z={widget.z}
                         selected={selectedWidgetId === widget.id}
-                        durationMinutes={widget.lessonTimerDurationMinutes ?? 60}
-                        remainingSeconds={widget.lessonTimerRemaining ?? 60 * 60}
+                        durationMinutes={widget.lessonTimerDurationMinutes ??
+                            60}
+                        remainingSeconds={widget.lessonTimerRemaining ??
+                            60 * 60}
                         running={widget.lessonTimerRunning ?? false}
                         onDurationChange={(minutes) =>
                             setLessonTimerDuration(widget.id, minutes)}
@@ -1314,7 +1843,8 @@
                         seconds={widget.timerRemaining ?? 15 * 60}
                         label={formatTimer(widget.timerRemaining ?? 15 * 60)}
                         progress={(widget.timerDuration ?? 0) > 0
-                            ? (widget.timerRemaining ?? 0) / (widget.timerDuration ?? 1)
+                            ? (widget.timerRemaining ?? 0) /
+                              (widget.timerDuration ?? 1)
                             : 0}
                         running={widget.timerRunning ?? false}
                         onSetSeconds={(seconds) =>

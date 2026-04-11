@@ -51,7 +51,7 @@
 	{onDelete}
 >
 	<div class="logo-wrap">
-		<img src={src} alt="Partille Gymnasium" class="logo" />
+		<img src={src} alt="Logotyp" class="logo" />
 	</div>
 </WidgetShell>
 

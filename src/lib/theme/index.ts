@@ -9,6 +9,16 @@
  */
 
 import { config } from "../../themes/default/config";
-export type { ThemeConfig, TextWidgetFontVariant } from "./types";
+export {
+  TEXT_WIDGET_BACKGROUND_VARIANTS,
+  TEXT_WIDGET_COLOR_VARIANTS,
+  TEXT_WIDGET_FONT_VARIANTS,
+} from "./types";
+export type {
+  ThemeConfig,
+  TextWidgetBackgroundVariant,
+  TextWidgetColorVariant,
+  TextWidgetFontVariant,
+} from "./types";
 
 export { config };

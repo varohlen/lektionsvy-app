@@ -161,9 +161,13 @@
 	}
 
 	.clock-face {
-		fill: var(--surface-soft);
-		stroke: color-mix(in srgb, var(--pg-blue-300) 50%, transparent);
+		fill: white;
+		stroke: color-mix(in srgb, var(--text) 14%, transparent);
 		stroke-width: 1.2;
+	}
+
+	:global(.screen-shell[data-theme="dark"]) .clock-face {
+		fill: color-mix(in srgb, var(--surface) 90%, white);
 	}
 
 	.clock-tick {
@@ -179,7 +183,7 @@
 
 	.clock-label {
 		font-size: 5.5px;
-		font-family: "Myriad Pro", "Avenir Next", "Segoe UI", sans-serif;
+		font-family: var(--font-body);
 		font-weight: 700;
 		fill: color-mix(in srgb, var(--text) 72%, transparent);
 		text-anchor: middle;
@@ -196,12 +200,12 @@
 	}
 
 	.hand-minute {
-		stroke: var(--pg-blue-700);
+		stroke: var(--text);
 		stroke-width: 1.6;
 	}
 
 	.hand-second {
-		stroke: var(--pg-red-700);
+		stroke: var(--brand-danger-700);
 		stroke-width: 0.6;
 	}
 
@@ -210,6 +214,6 @@
 	}
 
 	.clock-knob-inner {
-		fill: var(--pg-red-700);
+		fill: var(--brand-danger-700);
 	}
 </style>

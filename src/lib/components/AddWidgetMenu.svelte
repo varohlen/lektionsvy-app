@@ -191,8 +191,8 @@
 	}
 
 	.entry-card:hover {
-		background: color-mix(in srgb, var(--pg-blue-500) 8%, var(--surface-soft));
-		border-color: color-mix(in srgb, var(--pg-blue-500) 22%, var(--border));
+		background: color-mix(in srgb, var(--brand-primary-500) 8%, var(--surface-soft));
+		border-color: color-mix(in srgb, var(--brand-primary-500) 22%, var(--border));
 	}
 
 	.entry-card--proto {
@@ -216,13 +216,13 @@
 	}
 
 	.entry-badge--beta {
-		background: color-mix(in srgb, var(--pg-orange-500) 16%, transparent);
-		color: var(--pg-orange-700);
+		background: color-mix(in srgb, var(--brand-warm-500) 16%, transparent);
+		color: var(--brand-warm-700);
 	}
 
 	.entry-badge--prototype {
-		background: color-mix(in srgb, var(--pg-blue-500) 14%, transparent);
-		color: var(--pg-blue-700);
+		background: color-mix(in srgb, var(--brand-primary-500) 14%, transparent);
+		color: var(--brand-primary-700);
 	}
 
 	.entry-count {

@@ -60,6 +60,15 @@
 				TextStyle,
 				FontSize,
 			],
+			editorProps: {
+				attributes: {
+					lang: 'sv-SE',
+					spellcheck: 'false',
+					autocorrect: 'off',
+					autocapitalize: 'off',
+					autocomplete: 'off'
+				}
+			},
 			content: value || '',
 			onUpdate: ({ editor: ed }) => {
 				onValueChange(ed.getHTML());
@@ -246,8 +255,8 @@
 	}
 
 	.fmt-btn.active {
-		background: color-mix(in srgb, var(--pg-blue-700) 20%, transparent);
-		color: var(--pg-blue-700);
+		background: color-mix(in srgb, var(--brand-primary-700) 20%, transparent);
+		color: var(--brand-primary-700);
 	}
 
 	.fmt-divider {
@@ -283,7 +292,7 @@
 	.body-text-editor :global(.tiptap) {
 		padding: 0.35rem 0.4rem;
 		outline: none;
-		font-family: "Myriad Pro", "Avenir Next", "Segoe UI", sans-serif;
+		font-family: var(--font-body);
 		font-size: 1rem;
 		font-weight: 400;
 		line-height: 1.55;

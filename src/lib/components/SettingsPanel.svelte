@@ -6,6 +6,7 @@
         theme: Theme;
         showGrid: boolean;
         snapToGrid: boolean;
+        onResetBoard: () => void;
         onToggleTheme: () => void;
         onToggleShowGrid: () => void;
         onToggleSnapToGrid: () => void;
@@ -16,6 +17,7 @@
         theme,
         showGrid,
         snapToGrid,
+        onResetBoard,
         onToggleTheme,
         onToggleShowGrid,
         onToggleSnapToGrid,
@@ -106,6 +108,13 @@
                     <span class="toggle-thumb"></span>
                 </div>
             </button>
+
+            <button class="theme-row reset-row" type="button" onclick={onResetBoard}>
+                <div class="theme-copy">
+                    <span>Tavla</span>
+                    <strong>Återställ tavla</strong>
+                </div>
+            </button>
         </div>
     </div>
 {/if}
@@ -147,6 +156,14 @@
         font: inherit;
         cursor: pointer;
         transition: background 120ms ease;
+    }
+
+    .theme-row:hover {
+        background: color-mix(
+            in srgb,
+            var(--brand-primary-500) 8%,
+            var(--surface-soft)
+        );
     }
 
     .settings-group {
@@ -197,7 +214,7 @@
     .toggle-badge.active {
         background: color-mix(
             in srgb,
-            var(--pg-blue-500) 34%,
+            var(--brand-primary-500) 34%,
             var(--surface-soft)
         );
     }
@@ -218,7 +235,7 @@
     .theme-toggle.active {
         background: color-mix(
             in srgb,
-            var(--pg-blue-500) 34%,
+            var(--brand-primary-500) 34%,
             var(--surface-soft)
         );
     }
@@ -263,5 +280,9 @@
 
     :global(.screen-shell[data-theme="dark"]) .theme-toggle .toggle-thumb {
         background: color-mix(in srgb, var(--surface-soft) 88%, white 12%);
+    }
+
+    .reset-row {
+        justify-content: flex-start;
     }
 </style>

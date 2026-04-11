@@ -13,9 +13,27 @@ export const config = {
   },
   textWidget: {
     defaultFont: "body",
+    defaultBackground: "none",
+    defaultColor: "default",
     fontLabels: {
-      body: "Bas",
-      display: "Display",
+      body: "Inter",
+      display: "League Spartan",
+    },
+    backgroundLabels: {
+      none: "Ingen",
+      surface: "Yta",
+      primary: "Primär",
+      warm: "Varm",
+      success: "Grön",
+      danger: "Röd",
+    },
+    colorLabels: {
+      default: "Auto",
+      inverse: "Vit",
+      primary: "Primär",
+      warm: "Varm",
+      success: "Grön",
+      danger: "Röd",
     },
   },
   features: {

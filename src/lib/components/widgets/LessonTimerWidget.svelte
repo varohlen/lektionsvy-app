@@ -356,15 +356,15 @@
         width: 100%;
         height: 100%;
         --timer-scale: 1;
-        --lesson-red-base: #ecbdca;
-        --lesson-red-primary: #dd465b;
-        --lesson-red-secondary: #bc163f;
-        --lesson-blue-muted: #4d86a0;
+        --lesson-red-base: var(--brand-danger-300);
+        --lesson-red-primary: var(--brand-danger-600);
+        --lesson-red-secondary: var(--brand-danger-700);
+        --lesson-blue-muted: var(--brand-primary-600);
         --dial-card-surface: rgba(255, 255, 255, 0.96);
-        --dial-card-rim: rgba(0, 59, 74, 0.14);
+        --dial-card-rim: color-mix(in srgb, var(--brand-primary-900) 14%, transparent);
         --dial-card-rim-soft: rgba(255, 255, 255, 0.72);
-        --dial-card-shadow: rgba(0, 59, 74, 0.12);
-        --dial-face-surface: rgba(247, 249, 250, 0.96);
+        --dial-card-shadow: color-mix(in srgb, var(--brand-primary-900) 12%, transparent);
+        --dial-face-surface: white;
         --dial-tick-color: color-mix(in srgb, var(--text) 56%, transparent);
         --dial-tick-major: color-mix(in srgb, var(--text) 84%, transparent);
         --dial-label-color: color-mix(in srgb, var(--text) 90%, black);
@@ -376,12 +376,12 @@
     }
 
     :global(.screen-shell[data-theme="dark"]) .lesson-timer-layout {
-        --lesson-red-base: rgba(188, 22, 63, 0.18);
-        --lesson-red-primary: #dd465b;
-        --lesson-red-secondary: #bc163f;
-        --lesson-blue-muted: #b9dbe5;
-        --dial-card-surface: rgba(10, 33, 43, 0.82);
-        --dial-card-rim: rgba(185, 219, 229, 0.18);
+        --lesson-red-base: color-mix(in srgb, var(--brand-danger-700) 18%, transparent);
+        --lesson-red-primary: var(--brand-danger-600);
+        --lesson-red-secondary: var(--brand-danger-700);
+        --lesson-blue-muted: var(--brand-primary-300);
+        --dial-card-surface: color-mix(in srgb, var(--surface) 82%, transparent);
+        --dial-card-rim: color-mix(in srgb, var(--brand-primary-300) 18%, transparent);
         --dial-card-rim-soft: rgba(255, 255, 255, 0.05);
         --dial-card-shadow: rgba(0, 0, 0, 0.28);
         --dial-face-surface: rgba(255, 255, 255, 0.035);
@@ -467,7 +467,7 @@
 
     .dial-label {
         font-size: 7.2px;
-        font-family: "Myriad Pro", sans-serif;
+        font-family: var(--font-body);
         font-weight: 800;
         fill: var(--dial-label-color);
         text-anchor: middle;

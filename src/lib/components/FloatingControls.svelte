@@ -121,8 +121,8 @@
 	}
 
 	.dock-button.active {
-		background: color-mix(in srgb, var(--pg-blue-500) 12%, var(--surface-soft));
-		border-color: color-mix(in srgb, var(--pg-blue-500) 22%, transparent);
+		background: color-mix(in srgb, var(--brand-primary-500) 12%, var(--surface-soft));
+		border-color: color-mix(in srgb, var(--brand-primary-500) 22%, transparent);
 		color: var(--text);
 	}
 

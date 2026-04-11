@@ -183,12 +183,12 @@
 <style>
 	.stopwatch-layout {
 		--sw-scale: 1;
-		--sw-green-base: #d8f0d8;
-		--sw-green-primary: #3a8a4a;
-		--sw-green-strong: #1a6a2e;
-		--sw-active-surface: rgba(58, 138, 74, 0.12);
-		--sw-active-border: rgba(26, 106, 46, 0.22);
-		--sw-active-text: #1a6a2e;
+		--sw-green-base: color-mix(in srgb, var(--brand-success-400) 30%, white);
+		--sw-green-primary: var(--brand-success-600);
+		--sw-green-strong: var(--brand-success-700);
+		--sw-active-surface: color-mix(in srgb, var(--brand-success-600) 12%, transparent);
+		--sw-active-border: color-mix(in srgb, var(--brand-success-700) 22%, transparent);
+		--sw-active-text: var(--brand-success-700);
 
 		display: flex;
 		flex-direction: row;
@@ -198,10 +198,10 @@
 	}
 
 	:global(.screen-shell[data-theme="dark"]) .stopwatch-layout {
-		--sw-green-base: rgba(58, 138, 74, 0.18);
-		--sw-active-surface: rgba(58, 138, 74, 0.18);
-		--sw-active-border: rgba(120, 220, 140, 0.24);
-		--sw-active-text: #78dc8c;
+		--sw-green-base: color-mix(in srgb, var(--brand-success-600) 18%, transparent);
+		--sw-active-surface: color-mix(in srgb, var(--brand-success-600) 18%, transparent);
+		--sw-active-border: color-mix(in srgb, var(--brand-success-400) 24%, transparent);
+		--sw-active-text: var(--brand-success-400);
 	}
 
 	.stopwatch-main {

@@ -19,6 +19,7 @@
     "@tiptap/extension-ordered-list": "^3.22.0",
     "@tiptap/extension-text-style": "^3.22.0",
     "@tiptap/starter-kit": "^3.22.0",
+    "@untemps/svelte-palette": "5.2.0",
     "lucide-svelte": "^0.577.0"
   },
   "devDependencies": {
@@ -33,5 +34,10 @@
     "vite-plus": "catalog:",
     "wrangler": "^4.77.0"
   },
-  "packageManager": "pnpm@10.32.1"
+  "packageManager": "pnpm@10.32.1",
+  "pnpm": {
+    "overrides": {
+      "@untemps/utils": "3.0.0"
+    }
+  }
 }

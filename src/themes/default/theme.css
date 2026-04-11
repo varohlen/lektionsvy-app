@@ -3,7 +3,7 @@
  * Copy this file as a starting point for your own school's theme.
  */
 
-@import url("https://fonts.googleapis.com/css2?family=League+Spartan:wght@500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;700&display=swap");
 
 :root {
   /* Brand palette - neutral grayscale + accent */
@@ -33,7 +33,7 @@
 
   /* Typography */
   --font-body: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: "Inter", "Segoe UI", -apple-system, sans-serif;
+  --font-display: "League Spartan", "Inter", "Segoe UI", -apple-system, sans-serif;
 }
 
 body {
