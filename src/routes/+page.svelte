@@ -14,32 +14,24 @@
     import QrCodeWidget from "$lib/components/widgets/QrCodeWidget.svelte";
     import StopwatchWidget from "$lib/components/widgets/StopwatchWidget.svelte";
     import TrelsonWidget from "$lib/components/widgets/TrelsonWidget.svelte";
-    import {
-        config as themeConfig,
+	import {
+		config as themeConfig,
         TEXT_WIDGET_BACKGROUND_VARIANTS,
         TEXT_WIDGET_COLOR_VARIANTS,
         TEXT_WIDGET_FONT_VARIANTS,
         type TextWidgetBackgroundVariant,
-        type TextWidgetColorVariant,
-        type TextWidgetFontVariant,
-    } from "$lib/theme";
-    import { onMount } from "svelte";
+		type TextWidgetColorVariant,
+		type TextWidgetFontVariant,
+	} from "$lib/theme";
+	import {
+		config as variantConfig,
+		type WidgetDefaultLayout,
+		type WidgetType,
+		type WidgetReadiness,
+	} from "$lib/variant";
+	import { onMount } from "svelte";
 
-    type WidgetType =
-        | "logo"
-        | "date"
-        | "digital"
-        | "lcd"
-        | "text"
-        | "bodyText"
-        | "analog"
-        | "lessonTimer"
-        | "timer"
-        | "stopwatch"
-        | "qrcode"
-        | "trelson";
-    type WidgetReadiness = "ready" | "beta" | "prototype";
-    type Theme = "light" | "dark";
+	type Theme = "light" | "dark";
     type TrelsonPins = {
         start: string;
         resume: string;
@@ -53,16 +45,7 @@
         aspectRatio?: number;
         autoWidth?: boolean;
     };
-    type WidgetDefaultLayout = {
-        x: number;
-        y: number;
-        w?: number;
-        h?: number;
-        scaleH?: number;
-        z: number;
-        visible: boolean;
-    };
-    type WidgetInstance = {
+	type WidgetInstance = {
         id: string;
         type: WidgetType;
         x: number;
@@ -121,72 +104,24 @@
     const TRELSON_SECTION_SCALE = 0.155;
     const TRELSON_SECTION_GAP_FACTOR = 0.18;
     const trelsonEnabled = themeConfig.features.trelson;
-    const textWidgetFontVariants = [...TEXT_WIDGET_FONT_VARIANTS];
-    const textWidgetBackgroundVariants = [...TEXT_WIDGET_BACKGROUND_VARIANTS];
-    const textWidgetColorVariants = [...TEXT_WIDGET_COLOR_VARIANTS];
-
-    const widgetLabels: Record<WidgetType, string> = {
-        logo: "Logga",
-        date: "Datum",
-        digital: "Digital klocka",
-        lcd: "LCD-klocka",
-        text: "Rubrik",
-        bodyText: "Brödtext",
-        analog: "Analog klocka",
-        lessonTimer: "Analog timer",
-        timer: "Digital timer",
-        stopwatch: "Stoppur",
-        qrcode: "QR-kod",
-        trelson: "Trelson",
-    };
-
-    const widgetReadiness: Record<
-        WidgetType,
-        { status: WidgetReadiness; note?: string }
-    > = {
-        logo: {
-            status: "ready",
-            note: "Visar skolans logotyp som fristående widget.",
-        },
-        date: {
-            status: "ready",
-            note: "Datumrad som skalar efter innehållet.",
-        },
-        digital: {
-            status: "ready",
-            note: "Stor digital klocka för klassrummet.",
-        },
-        lcd: { status: "ready", note: "Retro 7-segment LCD-display." },
-        text: {
-            status: "ready",
-            note: "Stor skalande rubriktext för klassrummet.",
-        },
-        bodyText: {
-            status: "ready",
-            note: "Instruktioner, uppgifter och listor.",
-        },
-        analog: {
-            status: "ready",
-            note: "Klassisk analog klocka för klassrummet.",
-        },
-        lessonTimer: {
-            status: "ready",
-            note: "Visuell analog nedräkning för lektionspass.",
-        },
-        timer: {
-            status: "ready",
-            note: "Exakt digital timer med snabb redigering i widgeten.",
-        },
-        stopwatch: {
-            status: "ready",
-            note: "Stoppur som räknar uppåt, med varvfunktion.",
-        },
-        qrcode: {
-            status: "ready",
-            note: "Visa QR-kod för valfri URL.",
-        },
-        trelson: { status: "beta", note: "PIN-widget för Trelson-flöden." },
-    };
+	const textWidgetFontVariants = [...TEXT_WIDGET_FONT_VARIANTS];
+	const textWidgetBackgroundVariants = [...TEXT_WIDGET_BACKGROUND_VARIANTS];
+	const textWidgetColorVariants = [...TEXT_WIDGET_COLOR_VARIANTS];
+	const variantWidgetEntries = Object.entries(variantConfig.widgets) as [
+		WidgetType,
+		{
+			label: string;
+			readiness: { status: WidgetReadiness; note?: string };
+			enabled: boolean;
+			defaultLayout: WidgetDefaultLayout;
+		},
+	][];
+	const widgetLabels = Object.fromEntries(
+		variantWidgetEntries.map(([type, widget]) => [type, widget.label]),
+	) as Record<WidgetType, string>;
+	const widgetReadiness = Object.fromEntries(
+		variantWidgetEntries.map(([type, widget]) => [type, widget.readiness]),
+	) as Record<WidgetType, { status: WidgetReadiness; note?: string }>;
 
     const digitalTimeFormatter = new Intl.DateTimeFormat("sv-SE", {
         hour: "2-digit",
@@ -224,99 +159,17 @@
         trelson: { minW: 280, minH: 120, keepAspect: false },
     };
 
-    const widgetDefaults: Record<WidgetType, WidgetDefaultLayout> = {
-        logo: {
-            x: 0.01,
-            y: 0.93,
-            w: 0.15,
-            z: 1,
-            visible: true,
-        },
-        date: {
-            x: 0.01,
-            y: 0.105,
-            scaleH: 0.03,
-            z: 3,
-            visible: true,
-        },
-        digital: {
-            x: 0,
-            y: 0,
-            scaleH: 0.1241,
-            z: 2,
-            visible: true,
-        },
-        lcd: {
-            x: 0.35,
-            y: 0.4,
-            w: 0.3,
-            z: 3,
-            visible: false,
-        },
-        text: {
-            x: 0.265,
-            y: 0.3255,
-            scaleH: 0.0755,
-            z: 4,
-            visible: false,
-        },
-        bodyText: {
-            x: 0.35,
-            y: 0.25,
-            w: 0.3,
-            h: 0.4,
-            z: 5,
-            visible: false,
-        },
-        analog: {
-            x: 0.0322,
-            y: 0.0938,
-            w: 0.205,
-            z: 5,
-            visible: false,
-        },
-        lessonTimer: {
-            x: 0.5534,
-            y: 0.1536,
-            w: 0.3368,
-            z: 6,
-            visible: false,
-        },
-        timer: {
-            x: 0.2665,
-            y: 0.5026,
-            w: 0.3075,
-            z: 7,
-            visible: false,
-        },
-        stopwatch: {
-            x: 0.3,
-            y: 0.35,
-            w: 0.35,
-            h: 0.25,
-            z: 8,
-            visible: false,
-        },
-        qrcode: {
-            x: 0.4,
-            y: 0.2,
-            w: 0.2,
-            h: 0.35,
-            z: 8,
-            visible: false,
-        },
-        trelson: {
-            x: 0.647,
-            y: 0.13,
-            w: 0.23,
-            h: 0.34,
-            z: 9,
-            visible: false,
-        },
-    };
-    const enabledWidgetTypes = (
-        Object.keys(widgetDefaults) as WidgetType[]
-    ).filter((type) => trelsonEnabled || type !== "trelson");
+	const widgetDefaults = Object.fromEntries(
+		variantWidgetEntries.map(([type, widget]) => [type, widget.defaultLayout]),
+	) as Record<WidgetType, WidgetDefaultLayout>;
+	const enabledWidgetTypes = variantWidgetEntries
+		.filter(
+			([type, widget]) => widget.enabled && (trelsonEnabled || type !== "trelson"),
+		)
+		.map(([type]) => type);
+	const initialWidgetTypes = variantConfig.initialBoard.widgets.filter((type) =>
+		enabledWidgetTypes.includes(type),
+	);
 
     let widgetIdCounter = 0;
     const defaultTrelsonPins: TrelsonPins = {
@@ -325,6 +178,10 @@
         submit: "",
         close: "",
     };
+
+    function getWidgetInitialState(type: WidgetType) {
+        return variantConfig.widgets[type].initialState;
+    }
 
     function nextWidgetId(type: WidgetType) {
         widgetIdCounter += 1;
@@ -472,25 +329,32 @@
         }
 
         if (type === "text") {
-            instance.textValue = "Skriv rubrik";
+            instance.textValue =
+                getWidgetInitialState(type)?.textValue ?? "Skriv rubrik";
             instance.textFont = themeConfig.textWidget.defaultFont;
             instance.textBackground = themeConfig.textWidget.defaultBackground;
             instance.textColor = themeConfig.textWidget.defaultColor;
         }
 
         if (type === "bodyText") {
-            instance.textValue = "Skriv instruktioner här...";
+            instance.textValue =
+                getWidgetInitialState(type)?.textValue ??
+                "Skriv instruktioner här...";
         }
 
         if (type === "timer") {
-            instance.timerDuration = 15 * 60;
-            instance.timerRemaining = 15 * 60;
+            const defaultDuration =
+                getWidgetInitialState(type)?.timerDuration ?? 15 * 60;
+            instance.timerDuration = defaultDuration;
+            instance.timerRemaining = defaultDuration;
             instance.timerRunning = false;
         }
 
         if (type === "lessonTimer") {
-            instance.lessonTimerDurationMinutes = 60;
-            instance.lessonTimerRemaining = 60 * 60;
+            const defaultDurationMinutes =
+                getWidgetInitialState(type)?.lessonTimerDurationMinutes ?? 60;
+            instance.lessonTimerDurationMinutes = defaultDurationMinutes;
+            instance.lessonTimerRemaining = defaultDurationMinutes * 60;
             instance.lessonTimerRunning = false;
         }
 
@@ -502,11 +366,14 @@
         }
 
         if (type === "qrcode") {
-            instance.qrValue = "";
+            instance.qrValue = getWidgetInitialState(type)?.qrValue ?? "";
         }
 
         if (type === "trelson") {
-            instance.trelsonPins = { ...defaultTrelsonPins };
+            instance.trelsonPins = {
+                ...defaultTrelsonPins,
+                ...getWidgetInitialState(type)?.trelsonPins,
+            };
             instance.h = getTrelsonHeight(
                 instance.w,
                 TRELSON_EDIT_SECTION_COUNT,
@@ -576,8 +443,10 @@
         }
 
         if (restored.type === "timer") {
+            const defaultDuration =
+                getWidgetInitialState(restored.type)?.timerDuration ?? 15 * 60;
             restored.timerDuration = clamp(
-                Math.floor(Number(restored.timerDuration) || 15 * 60),
+                Math.floor(Number(restored.timerDuration) || defaultDuration),
                 0,
                 359999,
             );
@@ -592,8 +461,14 @@
         }
 
         if (restored.type === "lessonTimer") {
+            const defaultDurationMinutes =
+                getWidgetInitialState(restored.type)?.lessonTimerDurationMinutes ??
+                60;
             restored.lessonTimerDurationMinutes = clamp(
-                Math.floor(Number(restored.lessonTimerDurationMinutes) || 60),
+                Math.floor(
+                    Number(restored.lessonTimerDurationMinutes) ||
+                        defaultDurationMinutes,
+                ),
                 0,
                 120,
             );
@@ -645,12 +520,15 @@
 
         if (restored.type === "qrcode") {
             restored.qrValue =
-                typeof restored.qrValue === "string" ? restored.qrValue : "";
+                typeof restored.qrValue === "string"
+                    ? restored.qrValue
+                    : (getWidgetInitialState(restored.type)?.qrValue ?? "");
         }
 
         if (restored.type === "trelson") {
             restored.trelsonPins = {
                 ...defaultTrelsonPins,
+                ...getWidgetInitialState(restored.type)?.trelsonPins,
                 ...restored.trelsonPins,
             };
         }
@@ -750,8 +628,7 @@
         boardWidth = INITIAL_BOARD_WIDTH,
         boardHeight = INITIAL_BOARD_HEIGHT,
     ) {
-        return enabledWidgetTypes
-            .filter((type) => widgetDefaults[type].visible)
+        return initialWidgetTypes
             .map((type) =>
                 createWidgetInstance(type, boardWidth, boardHeight, {
                     useDefaultZ: true,
