@@ -177,14 +177,14 @@ export const coreConfig: AppVariantConfig = {
     trelson: {
       label: "Trelson",
       readiness: {
-        status: "beta",
+        status: "ready",
         note: "PIN-widget för Trelson-flöden.",
       },
       enabled: true,
       defaultLayout: {
         x: 0.647,
         y: 0.13,
-        w: 0.23,
+        w: 0.173,
         h: 0.34,
         z: 9,
       },

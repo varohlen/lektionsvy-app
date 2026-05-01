@@ -56,7 +56,6 @@
 	);
 	const sectionHeight = $derived(Math.max(44, w * 0.155));
 	const sectionGap = $derived(`${sectionHeight * 0.18}px`);
-	const titleSize = $derived(`${sectionHeight * 0.36}px`);
 	const labelSize = $derived(`${sectionHeight * 0.2}px`);
 	const valueSize = $derived(`${sectionHeight * 0.28}px`);
 	const inputSize = $derived(`${sectionHeight * 0.26}px`);
@@ -64,6 +63,8 @@
 	const sectionPaddingX = $derived(`${sectionHeight * 0.22}px`);
 	const editLabelMin = $derived(`${sectionHeight * 1.4}px`);
 	const editGap = $derived(`${sectionHeight * 0.22}px`);
+	const logoSize = $derived(`${sectionHeight * 0.9}px`);
+	const brandSize = $derived(`${sectionHeight * 0.28}px`);
 </script>
 
 <WidgetShell
@@ -83,10 +84,15 @@
 >
 	<div
 		class="trelson-widget"
-		style={`grid-template-rows: repeat(${visibleRows.length + 1}, minmax(0, 1fr)); --trelson-gap:${sectionGap}; --trelson-title-size:${titleSize}; --trelson-label-size:${labelSize}; --trelson-value-size:${valueSize}; --trelson-input-size:${inputSize}; --trelson-section-padding-y:${sectionPaddingY}; --trelson-section-padding-x:${sectionPaddingX}; --trelson-edit-label-min:${editLabelMin}; --trelson-edit-gap:${editGap};`}
+		style={`grid-template-rows: repeat(${visibleRows.length + 1}, minmax(0, 1fr)); --trelson-gap:${sectionGap}; --trelson-brand-size:${brandSize}; --trelson-logo-size:${logoSize}; --trelson-label-size:${labelSize}; --trelson-value-size:${valueSize}; --trelson-input-size:${inputSize}; --trelson-section-padding-y:${sectionPaddingY}; --trelson-section-padding-x:${sectionPaddingX}; --trelson-edit-label-min:${editLabelMin}; --trelson-edit-gap:${editGap};`}
 	>
 		<div class="trelson-section trelson-header">
-			<h3>PIN-koder för Trelson</h3>
+			<div class="trelson-brand">
+				<span class="trelson-brand-mark" aria-hidden="true">
+					<img src="/trelson.svg" alt="" />
+				</span>
+				<h3>TRELSON</h3>
+			</div>
 		</div>
 
 		{#each visibleRows as row}
@@ -173,18 +179,49 @@
 	.trelson-header {
 		background: linear-gradient(
 			180deg,
-			var(--trelson-header-surface) 0%,
-			color-mix(in srgb, var(--trelson-header-surface) 90%, var(--trelson-lavender-strong) 10%) 100%
+			color-mix(in srgb, var(--trelson-plum) 94%, black 6%) 0%,
+			color-mix(in srgb, var(--trelson-plum) 82%, var(--trelson-header-surface) 18%) 100%
 		);
-		border-color: color-mix(in srgb, var(--trelson-plum) 22%, transparent);
-		box-shadow: inset 0 1px 0 color-mix(in srgb, white 65%, transparent);
+		border-color: color-mix(in srgb, var(--trelson-plum) 52%, transparent);
+		box-shadow:
+			inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
+			0 0.2rem 0.5rem color-mix(in srgb, var(--trelson-plum) 18%, transparent);
+	}
+
+	.trelson-brand {
+		display: inline-flex;
+		align-items: center;
+		gap: clamp(0.45rem, 1vw, 0.7rem);
+	}
+
+	.trelson-brand-mark {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: var(--trelson-logo-size);
+		height: var(--trelson-logo-size);
+		border-radius: 0.8rem;
+		overflow: hidden;
+		flex: 0 0 auto;
+	}
+
+	.trelson-brand-mark img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: left center;
+		transform: scale(1.18);
+		transform-origin: left center;
 	}
 
 	.trelson-header h3 {
 		margin: 0;
-		font-size: var(--trelson-title-size);
-		line-height: 1.05;
-		color: var(--trelson-ink);
+		font-size: var(--trelson-brand-size);
+		line-height: 1;
+		font-weight: 800;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: white;
 	}
 
 	.pin-row {
@@ -198,7 +235,10 @@
 	}
 
 	.pin-row--read {
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
 		align-content: center;
+		gap: clamp(0.75rem, 1.2vw, 1.4rem);
 		background: var(--trelson-read-surface);
 		border-color: color-mix(in srgb, var(--trelson-plum) 12%, transparent);
 		box-shadow: inset 0 1px 0 color-mix(in srgb, white 55%, transparent);
@@ -245,6 +285,8 @@
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		color: var(--trelson-ink);
+		text-align: right;
+		white-space: nowrap;
 	}
 
 	.pin-input::placeholder {

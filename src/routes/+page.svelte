@@ -161,7 +161,7 @@
         timer: { minW: 320, minH: 170, keepAspect: true, aspectRatio: 2 },
         stopwatch: { minW: 340, minH: 140, keepAspect: true, aspectRatio: 2.5 },
         qrcode: { minW: 180, minH: 200, keepAspect: false },
-        trelson: { minW: 280, minH: 120, keepAspect: false },
+        trelson: { minW: 220, minH: 120, keepAspect: false },
     };
 
 	const widgetDefaults = Object.fromEntries(
@@ -273,7 +273,7 @@
             widget.trelsonPins ?? defaultTrelsonPins,
         ).filter((value) => value.trim().length > 0).length;
 
-        return Math.max(1, 1 + filledCount);
+        return Math.max(2, 1 + filledCount);
     }
 
     function createWidgetInstance(
@@ -700,7 +700,7 @@
             widget.trelsonPins ?? defaultTrelsonPins,
         ).filter((value) => value.trim().length > 0).length;
 
-        return Math.max(1, 1 + filledCount);
+        return Math.max(2, 1 + filledCount);
     }
 
     function getTrelsonSectionHeightFromWidth(width: number) {
