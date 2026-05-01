@@ -95,6 +95,7 @@
         theme: Theme;
         showGrid: boolean;
         snapToGrid: boolean;
+        defaultLayout?: boolean;
         widgets: WidgetInstance[];
     };
 
@@ -206,8 +207,13 @@
     let settingsOpen = $state(false);
     let showGrid = $state(false);
     let snapToGrid = $state(false);
+    let defaultLayout = $state(true);
     let fullscreenActive = $state(false);
     let fullscreenHintVisible = $state(false);
+    let fullscreenDockVisible = $state(false);
+    let fullscreenDockTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    const FULLSCREEN_DOCK_TRIGGER_ZONE = 80;
+    const FULLSCREEN_DOCK_HIDE_DELAY = 2400;
     let selectedWidgetId = $state<string | null>(null);
     let dragState = $state<DragState | null>(null);
     let resizeState = $state<ResizeState | null>(null);
@@ -228,6 +234,7 @@
         theme === "dark" ? themeConfig.logos.dark : themeConfig.logos.light,
     );
     const hasWidgets = $derived(widgets.length > 0);
+    const showBoardGuide = $derived(!hasWidgets || defaultLayout);
     const orderedWidgets = $derived([...widgets].sort((a, b) => a.z - b.z));
     const widgetMenuEntries = $derived(
         enabledWidgetTypes.map((type) => ({
@@ -589,6 +596,7 @@
                 theme: parsed.theme === "dark" ? "dark" : "light",
                 showGrid: Boolean(parsed.showGrid),
                 snapToGrid: Boolean(parsed.snapToGrid),
+                defaultLayout: Boolean(parsed.defaultLayout),
                 widgets:
                     restoredWidgets.length > 0
                         ? restoredWidgets
@@ -614,6 +622,7 @@
             theme,
             showGrid,
             snapToGrid,
+            defaultLayout,
             widgets: widgets.map((widget) => ({
                 ...widget,
                 stopwatchLaps: widget.stopwatchLaps
@@ -675,6 +684,7 @@
         });
 
         widgets = [...widgets, nextWidget];
+        defaultLayout = false;
         selectedWidgetId = nextWidget.id;
         syncTrelsonHeight(nextWidget.id, true);
     }
@@ -741,6 +751,7 @@
 
     function removeWidget(id: string) {
         widgets = widgets.filter((widget) => widget.id !== id);
+        defaultLayout = false;
 
         if (selectedWidgetId === id) {
             selectedWidgetId = null;
@@ -1005,6 +1016,7 @@
         theme = "light";
         showGrid = false;
         snapToGrid = false;
+        defaultLayout = true;
         selectedWidgetId = null;
         dragState = null;
         resizeState = null;
@@ -1015,12 +1027,22 @@
 
     function toggleAddMenu() {
         addMenuOpen = !addMenuOpen;
-        if (addMenuOpen) settingsOpen = false;
+        if (addMenuOpen) {
+            settingsOpen = false;
+            if (fullscreenActive) clearFullscreenDockTimeout();
+        } else if (fullscreenActive) {
+            scheduleFullscreenDockHide();
+        }
     }
 
     function toggleSettings() {
         settingsOpen = !settingsOpen;
-        if (settingsOpen) addMenuOpen = false;
+        if (settingsOpen) {
+            addMenuOpen = false;
+            if (fullscreenActive) clearFullscreenDockTimeout();
+        } else if (fullscreenActive) {
+            scheduleFullscreenDockHide();
+        }
     }
 
     async function toggleFullscreen() {
@@ -1036,11 +1058,40 @@
         }
     }
 
+    function clearFullscreenDockTimeout() {
+        if (fullscreenDockTimeoutId !== null) {
+            window.clearTimeout(fullscreenDockTimeoutId);
+            fullscreenDockTimeoutId = null;
+        }
+    }
+
+    function scheduleFullscreenDockHide() {
+        clearFullscreenDockTimeout();
+        fullscreenDockTimeoutId = window.setTimeout(() => {
+            if (!addMenuOpen && !settingsOpen) {
+                fullscreenDockVisible = false;
+            }
+        }, FULLSCREEN_DOCK_HIDE_DELAY);
+    }
+
+    function handleFullscreenPointerMove(event: PointerEvent) {
+        if (!fullscreenActive) return;
+
+        const nearBottom = event.clientY > window.innerHeight - FULLSCREEN_DOCK_TRIGGER_ZONE;
+
+        if (nearBottom) {
+            fullscreenDockVisible = true;
+            scheduleFullscreenDockHide();
+        }
+    }
+
     function handleFullscreenChange() {
         fullscreenActive = Boolean(document.fullscreenElement);
 
         if (!fullscreenActive) {
             fullscreenHintVisible = false;
+            fullscreenDockVisible = false;
+            clearFullscreenDockTimeout();
             return;
         }
 
@@ -1467,8 +1518,10 @@
                 theme = persistedState.theme;
                 showGrid = persistedState.showGrid || persistedState.snapToGrid;
                 snapToGrid = persistedState.snapToGrid;
+                defaultLayout = Boolean(persistedState.defaultLayout);
                 widgets = persistedState.widgets;
             } else {
+                defaultLayout = true;
                 widgets = createInitialWidgets(rect.width, rect.height);
             }
 
@@ -1535,6 +1588,7 @@
         }, 1000);
 
         window.addEventListener("pointermove", handlePointerMove);
+        window.addEventListener("pointermove", handleFullscreenPointerMove);
         window.addEventListener("pointerup", stopDrag);
         window.addEventListener("pagehide", handlePageHide);
         window.addEventListener("beforeunload", handlePageHide);
@@ -1543,7 +1597,9 @@
         return () => {
             flushPersistedBoardState();
             window.clearInterval(interval);
+            clearFullscreenDockTimeout();
             window.removeEventListener("pointermove", handlePointerMove);
+            window.removeEventListener("pointermove", handleFullscreenPointerMove);
             window.removeEventListener("pointerup", stopDrag);
             window.removeEventListener("pagehide", handlePageHide);
             window.removeEventListener("beforeunload", handlePageHide);
@@ -1562,32 +1618,39 @@
 </svelte:head>
 
 <div class="screen-shell" data-theme={theme}>
-    {#if !fullscreenActive}
-        <FloatingControls
-            {theme}
-            {addMenuOpen}
-            {settingsOpen}
-            {fullscreenActive}
-            onToggleAddMenu={toggleAddMenu}
-            onToggleSettings={toggleSettings}
-            onToggleFullscreen={toggleFullscreen}
-        />
-        <AddWidgetMenu open={addMenuOpen} entries={widgetMenuEntries} />
-        <SettingsPanel
-            open={settingsOpen}
-            {theme}
-            {showGrid}
-            {snapToGrid}
-            onResetBoard={resetBoard}
-            onToggleTheme={toggleTheme}
-            onToggleShowGrid={toggleShowGrid}
-            onToggleSnapToGrid={toggleSnapToGrid}
-        />
+    {#if !fullscreenActive || fullscreenDockVisible}
+        <div
+            class="dock-wrapper"
+            class:dock-wrapper--fullscreen={fullscreenActive}
+            onpointerenter={() => { if (fullscreenActive) clearFullscreenDockTimeout(); }}
+            onpointerleave={() => { if (fullscreenActive) scheduleFullscreenDockHide(); }}
+        >
+            <FloatingControls
+                {theme}
+                {addMenuOpen}
+                {settingsOpen}
+                {fullscreenActive}
+                onToggleAddMenu={toggleAddMenu}
+                onToggleSettings={toggleSettings}
+                onToggleFullscreen={toggleFullscreen}
+            />
+            <AddWidgetMenu open={addMenuOpen} entries={widgetMenuEntries} />
+            <SettingsPanel
+                open={settingsOpen}
+                {theme}
+                {showGrid}
+                {snapToGrid}
+                onResetBoard={resetBoard}
+                onToggleTheme={toggleTheme}
+                onToggleShowGrid={toggleShowGrid}
+                onToggleSnapToGrid={toggleSnapToGrid}
+            />
+        </div>
     {/if}
 
     {#if fullscreenHintVisible}
         <div class="fullscreen-hint" role="status" aria-live="polite">
-            Tryck på ESC för att lämna helskärm
+            Verktyg visas längst ner ↓
         </div>
     {/if}
 
@@ -1599,8 +1662,15 @@
             bind:this={boardElement}
             onpointerdown={clearSelection}
         >
-            {#if !hasWidgets}
-                <div class="empty-state">Välj widgets</div>
+            {#if showBoardGuide}
+                <div class="empty-state">
+                    <p class="empty-state-text">Lägg till widgets med knappen nedan</p>
+                    <span class="empty-state-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 5v14M19 12l-7 7-7-7" />
+                        </svg>
+                    </span>
+                </div>
             {/if}
 
             {#each orderedWidgets as widget (widget.id)}
@@ -2002,15 +2072,66 @@
         opacity: 0.55;
     }
 
+    .dock-wrapper {
+        display: contents;
+    }
+
+    .dock-wrapper--fullscreen {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 18;
+        pointer-events: none;
+        animation: dock-fade-in 220ms ease both;
+    }
+
+    .dock-wrapper--fullscreen :global(*) {
+        pointer-events: auto;
+    }
+
+    @keyframes dock-fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(0.5rem);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     .empty-state {
         position: absolute;
         inset: 0;
-        display: grid;
-        place-items: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding-top: 12vh;
+        pointer-events: none;
+    }
+
+    .empty-state-text {
+        margin: 0;
         font-weight: 700;
         font-size: 1.1rem;
         letter-spacing: 0.02em;
-        color: color-mix(in srgb, var(--text) 32%, transparent);
-        pointer-events: none;
+        color: color-mix(in srgb, var(--text) 38%, transparent);
+    }
+
+    .empty-state-arrow {
+        display: block;
+        width: 1.6rem;
+        height: 1.6rem;
+        color: color-mix(in srgb, var(--text) 28%, transparent);
+        animation: empty-bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes empty-bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(0.4rem); }
     }
 </style>

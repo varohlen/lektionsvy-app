@@ -480,7 +480,7 @@
 		justify-content: center;
 		width: 100%;
 		min-height: 0;
-		color: var(--text);
+		color: #000;
 	}
 
 	.qr-display :global(svg) {

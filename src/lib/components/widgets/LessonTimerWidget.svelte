@@ -165,6 +165,17 @@
     const secondarySectorPath = $derived(describeSector(secondaryMinutes));
     const widgetScale = $derived(Math.max(0.72, Math.min(w / 420, h / 520)));
     const timerStyle = $derived(`--timer-scale:${widgetScale};`);
+    let expiredAcknowledged = $state(false);
+    const isAtZero = $derived(!running && remainingSeconds === 0 && durationMinutes > 0);
+    const expired = $derived(isAtZero && !expiredAcknowledged);
+
+    $effect(() => {
+        if (!isAtZero) expiredAcknowledged = false;
+    });
+
+    $effect(() => {
+        if (isAtZero && selected) expiredAcknowledged = true;
+    });
 
     function formatDuration(totalSeconds: number) {
         const safeSeconds = Math.max(0, totalSeconds);
@@ -242,7 +253,7 @@
     {onSendBackward}
     {onDelete}
 >
-    <div class="lesson-timer-layout" style={timerStyle}>
+    <div class="lesson-timer-layout" class:expired style={timerStyle}>
         <div class="dial-card">
             <div class="dial-stage">
                 <div class="dial-face" bind:this={dialFaceElement}>
@@ -327,7 +338,7 @@
                         type="button"
                         onclick={onToggle}
                     >
-                        <span class="dial-action-icon" aria-hidden="true">
+                        <span class="play-pause-icon" aria-hidden="true">
                             {#if running}
                                 <span class="pause-bars">
                                     <span></span>
@@ -356,6 +367,7 @@
         width: 100%;
         height: 100%;
         --timer-scale: 1;
+        --widget-scale: var(--timer-scale);
         --lesson-red-base: var(--brand-danger-300);
         --lesson-red-primary: var(--brand-danger-600);
         --lesson-red-secondary: var(--brand-danger-700);
@@ -576,38 +588,23 @@
         color: var(--lesson-red-secondary);
     }
 
-    .dial-action-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: calc(0.95rem * var(--timer-scale));
-        height: calc(0.95rem * var(--timer-scale));
-        flex: 0 0 auto;
-    }
-
-    .play-triangle {
-        width: 0;
-        height: 0;
-        border-top: calc(0.3rem * var(--timer-scale)) solid transparent;
-        border-bottom: calc(0.3rem * var(--timer-scale)) solid transparent;
-        border-left: calc(0.48rem * var(--timer-scale)) solid currentColor;
-        margin-left: calc(0.08rem * var(--timer-scale));
-    }
-
-    .pause-bars {
-        display: inline-flex;
-        gap: calc(0.16rem * var(--timer-scale));
-    }
-
-    .pause-bars span {
-        width: calc(0.18rem * var(--timer-scale));
-        height: calc(0.64rem * var(--timer-scale));
-        border-radius: 999px;
-        background: currentColor;
-    }
 
     .dial-action-label {
         line-height: 1;
+    }
+
+    .lesson-timer-layout.expired .readout-time {
+        animation: expired-pulse 1.6s ease-in-out infinite;
+        color: var(--brand-danger-600);
+    }
+
+    .lesson-timer-layout.expired .dial-sector-base {
+        animation: expired-pulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes expired-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
     }
 
     .dial-readout {

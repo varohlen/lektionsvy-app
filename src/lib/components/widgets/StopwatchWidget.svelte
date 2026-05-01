@@ -138,7 +138,7 @@
 					type="button"
 					onclick={onToggle}
 				>
-					<span class="action-icon" aria-hidden="true">
+					<span class="play-pause-icon" aria-hidden="true">
 						{#if running}
 							<span class="pause-bars"><span></span><span></span></span>
 						{:else}
@@ -183,6 +183,7 @@
 <style>
 	.stopwatch-layout {
 		--sw-scale: 1;
+		--widget-scale: var(--sw-scale);
 		--sw-green-base: color-mix(in srgb, var(--brand-success-400) 30%, white);
 		--sw-green-primary: var(--brand-success-600);
 		--sw-green-strong: var(--brand-success-700);
@@ -278,35 +279,6 @@
 		color: var(--sw-active-text);
 	}
 
-	.action-icon {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: calc(0.85rem * var(--sw-scale));
-		height: calc(0.85rem * var(--sw-scale));
-		flex: 0 0 auto;
-	}
-
-	.play-triangle {
-		width: 0;
-		height: 0;
-		border-top: calc(0.28rem * var(--sw-scale)) solid transparent;
-		border-bottom: calc(0.28rem * var(--sw-scale)) solid transparent;
-		border-left: calc(0.44rem * var(--sw-scale)) solid currentColor;
-		margin-left: calc(0.06rem * var(--sw-scale));
-	}
-
-	.pause-bars {
-		display: inline-flex;
-		gap: calc(0.14rem * var(--sw-scale));
-	}
-
-	.pause-bars span {
-		width: calc(0.16rem * var(--sw-scale));
-		height: calc(0.58rem * var(--sw-scale));
-		border-radius: 999px;
-		background: currentColor;
-	}
 
 	.lap-panel {
 		flex: 0 0 auto;

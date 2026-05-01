@@ -48,6 +48,17 @@
     const widgetScale = $derived(Math.max(0.72, Math.min(w / 420, h / 210)));
     const timerStyle = $derived(`--timer-scale:${widgetScale};`);
     const editMode = $derived(selected && !running);
+    let expiredAcknowledged = $state(false);
+    const isAtZero = $derived(!running && seconds === 0 && progress === 0);
+    const expired = $derived(isAtZero && !expiredAcknowledged);
+
+    $effect(() => {
+        if (!isAtZero) expiredAcknowledged = false;
+    });
+
+    $effect(() => {
+        if (isAtZero && selected) expiredAcknowledged = true;
+    });
     const totalHours = $derived(Math.floor(Math.max(0, seconds) / 3600));
     const totalMinutes = $derived(Math.floor((Math.max(0, seconds) % 3600) / 60));
     const totalSeconds = $derived(Math.max(0, seconds) % 60);
@@ -101,7 +112,7 @@
     {onSendBackward}
     {onDelete}
 >
-    <div class="timer-layout" style={timerStyle}>
+    <div class="timer-layout" class:expired style={timerStyle}>
         <div class="timer-header">
             <div class="timer-readout-shell">
                 {#if editMode}
@@ -203,7 +214,7 @@
 
         <div class="timer-actions">
             <button class:running class="action-button" type="button" onclick={onToggle}>
-                <span class="action-icon" aria-hidden="true">
+                <span class="play-pause-icon" aria-hidden="true">
                     {#if running}
                         <span class="pause-bars">
                             <span></span>
@@ -226,6 +237,7 @@
 <style>
     .timer-layout {
         --timer-scale: 1;
+        --widget-scale: var(--timer-scale);
         --timer-orange-base: color-mix(in srgb, var(--brand-warm-400) 30%, white);
         --timer-orange-primary: var(--brand-warm-500);
         --timer-orange-strong: var(--brand-warm-600);
@@ -449,33 +461,18 @@
         color: var(--timer-active-text);
     }
 
-    .action-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: calc(0.95rem * var(--timer-scale));
-        height: calc(0.95rem * var(--timer-scale));
-        flex: 0 0 auto;
+
+    .timer-layout.expired .timer-readout-display-text {
+        animation: expired-pulse 1.6s ease-in-out infinite;
+        color: var(--brand-danger-600);
     }
 
-    .play-triangle {
-        width: 0;
-        height: 0;
-        border-top: calc(0.3rem * var(--timer-scale)) solid transparent;
-        border-bottom: calc(0.3rem * var(--timer-scale)) solid transparent;
-        border-left: calc(0.48rem * var(--timer-scale)) solid currentColor;
-        margin-left: calc(0.08rem * var(--timer-scale));
+    .timer-layout.expired .timer-bar-fill {
+        background: var(--brand-danger-500);
     }
 
-    .pause-bars {
-        display: inline-flex;
-        gap: calc(0.16rem * var(--timer-scale));
-    }
-
-    .pause-bars span {
-        width: calc(0.18rem * var(--timer-scale));
-        height: calc(0.64rem * var(--timer-scale));
-        border-radius: 999px;
-        background: currentColor;
+    @keyframes expired-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
     }
 </style>

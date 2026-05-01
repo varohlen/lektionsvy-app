@@ -86,6 +86,7 @@
 	let openPicker = $state<'color' | 'background' | null>(null);
 	let colorPickerElement = $state<HTMLDivElement | null>(null);
 	let backgroundPickerElement = $state<HTMLDivElement | null>(null);
+	let activePaletteElement = $state<HTMLDivElement | null>(null);
 	const resolvedColorCache = new Map<string, string>();
 
 	const fontSizes = ['12px', '14px', '16px', '20px', '24px', '32px'];
@@ -117,12 +118,11 @@
 			? null
 			: resolveCssColor(getTextBackgroundValue(background), 'backgroundColor')
 	);
-	const hasBodyTextChrome = $derived(background !== 'none');
 	const bodyTextBackground = $derived(getTextBackgroundValue(background));
 	const bodyTextColor = $derived(getTextColorValue(color));
 	const bodyTextBorderColor = $derived(
 		background === 'none'
-			? undefined
+			? 'color-mix(in srgb, var(--text) 6%, transparent)'
 			: 'color-mix(in srgb, var(--text) 10%, var(--brand-primary-500) 26%)'
 	);
 	const blockStyleOptions = [
@@ -394,7 +394,7 @@
 				return 'var(--body-text-bg-danger)';
 			case 'none':
 			default:
-				return 'transparent';
+				return 'var(--body-text-bg-subtle)';
 		}
 	}
 
@@ -449,6 +449,21 @@
 		return resolved;
 	}
 
+	$effect(() => {
+		if (!activePaletteElement) return;
+		const rect = activePaletteElement.getBoundingClientRect();
+		const edgePadding = 12;
+		if (rect.right > window.innerWidth - edgePadding) {
+			const overflow = rect.right - window.innerWidth + edgePadding;
+			activePaletteElement.style.transform = `translateX(${-overflow}px)`;
+		} else if (rect.left < edgePadding) {
+			const overflow = edgePadding - rect.left;
+			activePaletteElement.style.transform = `translateX(${overflow}px)`;
+		} else {
+			activePaletteElement.style.transform = '';
+		}
+	});
+
 	function togglePicker(kind: 'color' | 'background') {
 		openPicker = openPicker === kind ? null : kind;
 	}
@@ -461,6 +476,7 @@
 
 	function closePicker() {
 		openPicker = null;
+		activePaletteElement = null;
 	}
 
 	function handleDocumentPointerDown(event: PointerEvent) {
@@ -510,7 +526,7 @@
 	{h}
 	{z}
 	{selected}
-	chrome={hasBodyTextChrome}
+	chrome={true}
 	allowBodyOverflow={true}
 	background={bodyTextBackground}
 	color={bodyTextColor}
@@ -579,6 +595,7 @@
 
 					{#if openPicker === 'color'}
 						<div
+							bind:this={activePaletteElement}
 							class="fmt-palette"
 							role="dialog"
 							tabindex="-1"
@@ -626,6 +643,7 @@
 
 					{#if openPicker === 'background'}
 						<div
+							bind:this={activePaletteElement}
 							class="fmt-palette"
 							role="dialog"
 							tabindex="-1"
@@ -960,6 +978,7 @@
 		--body-text-color-warm: var(--brand-warm-700);
 		--body-text-color-success: var(--brand-success-700);
 		--body-text-color-danger: var(--brand-danger-700);
+		--body-text-bg-subtle: color-mix(in srgb, var(--surface) 72%, var(--bg-bottom) 28%);
 		--body-text-bg-surface: color-mix(in srgb, var(--surface) 92%, white 8%);
 		--body-text-bg-primary: var(--brand-primary-600);
 		--body-text-bg-warm: var(--brand-warm-600);
@@ -974,6 +993,7 @@
 		--body-text-color-warm: var(--brand-warm-300);
 		--body-text-color-success: var(--brand-success-300);
 		--body-text-color-danger: var(--brand-danger-300);
+		--body-text-bg-subtle: color-mix(in srgb, var(--surface) 60%, var(--bg-bottom) 40%);
 		--body-text-bg-surface: color-mix(in srgb, var(--surface) 78%, white 22%);
 		--body-text-bg-primary: color-mix(in srgb, var(--surface) 82%, var(--brand-primary-500) 18%);
 		--body-text-bg-warm: color-mix(in srgb, var(--brand-warm-500) 74%, var(--surface));

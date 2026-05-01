@@ -181,10 +181,10 @@
 		const measuredToolbarHeight = toolbarElement.offsetHeight;
 		const edgePadding = 16;
 		const widgetWidth = widgetElement.offsetWidth || w;
-		const preferredOffset = widgetWidth - toolbarWidth;
+		const centeredOffset = (widgetWidth - toolbarWidth) / 2;
 		const minOffset = edgePadding - x;
 		const maxOffset = viewportWidth - edgePadding - x - toolbarWidth;
-		const clampedOffset = Math.min(Math.max(preferredOffset, minOffset), maxOffset);
+		const clampedOffset = Math.min(Math.max(centeredOffset, minOffset), maxOffset);
 		const outsideBottom = y + h + measuredToolbarHeight + edgePadding > viewportHeight;
 
 		toolbarOffsetX = Number.isFinite(clampedOffset) ? clampedOffset : 0;
