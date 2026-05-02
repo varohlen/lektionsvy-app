@@ -1,5 +1,22 @@
 <script lang="ts">
     import AddWidgetMenu from "$lib/components/AddWidgetMenu.svelte";
+    import {
+        cloneWidgetInstances,
+        createPortableBoardDocument,
+        createPersistedBoardState,
+        deleteBoardLibraryItem,
+        getMissingWidgetTypes,
+        getBoardLibraryItem,
+        isPortableBoardDocumentV1,
+        listBoardLibraryItems,
+        saveBoardLibraryItem,
+        type BoardLibraryItemV1,
+        type BoardThemeMode,
+        type PersistedBoardStateV1,
+        type PortableBoardDocumentV1,
+        type TrelsonPins,
+        type WidgetInstance,
+    } from "$lib/board";
     import FloatingControls from "$lib/components/FloatingControls.svelte";
     import SettingsPanel from "$lib/components/SettingsPanel.svelte";
     import AnalogClockWidget from "$lib/components/widgets/AnalogClockWidget.svelte";
@@ -33,46 +50,13 @@
 	} from "$lib/variant";
 	import { onMount } from "svelte";
 
-	type Theme = "light" | "dark";
-    type TrelsonPins = {
-        start: string;
-        resume: string;
-        submit: string;
-        close: string;
-    };
+	type Theme = BoardThemeMode;
     type WidgetConstraint = {
         minW: number;
         minH: number;
         keepAspect: boolean;
         aspectRatio?: number;
         autoWidth?: boolean;
-    };
-	type WidgetInstance = {
-        id: string;
-        type: WidgetType;
-        x: number;
-        y: number;
-        w: number;
-        h: number;
-        scaleH?: number;
-        z: number;
-        textValue?: string;
-        textFont?: TextWidgetFontVariant;
-        bodyTextFont?: BodyTextFontVariant;
-        textBackground?: TextWidgetBackgroundVariant;
-        textColor?: TextWidgetColorVariant;
-        timerDuration?: number;
-        timerRemaining?: number;
-        timerRunning?: boolean;
-        lessonTimerDurationMinutes?: number;
-        lessonTimerRemaining?: number;
-        lessonTimerRunning?: boolean;
-        stopwatchStartTime?: number | null;
-        stopwatchAccumulated?: number;
-        stopwatchRunning?: boolean;
-        stopwatchLaps?: number[];
-        qrValue?: string;
-        trelsonPins?: TrelsonPins;
     };
     type DragState = {
         id: string;
@@ -90,15 +74,6 @@
         width: number;
         height: number;
     };
-    type PersistedBoardState = {
-        version: 1;
-        theme: Theme;
-        showGrid: boolean;
-        snapToGrid: boolean;
-        defaultLayout?: boolean;
-        widgets: WidgetInstance[];
-    };
-
     const INITIAL_BOARD_WIDTH = 1366;
     const INITIAL_BOARD_HEIGHT = 768;
     const GRID_SIZE = 16;
@@ -218,6 +193,7 @@
     let dragState = $state<DragState | null>(null);
     let resizeState = $state<ResizeState | null>(null);
     let lastBoardSize = $state<BoardSize | null>(null);
+    let boardLibraryItems = $state<BoardLibraryItemV1[]>([]);
     let storageReady = false;
     let widgets = $state<WidgetInstance[]>(
         createInitialWidgets(INITIAL_BOARD_WIDTH, INITIAL_BOARD_HEIGHT),
@@ -572,13 +548,13 @@
     function loadPersistedBoardState(
         boardWidth: number,
         boardHeight: number,
-    ): PersistedBoardState | null {
+    ): PersistedBoardStateV1 | null {
         try {
             const raw = window.localStorage.getItem(STORAGE_KEY);
 
             if (!raw) return null;
 
-            const parsed = JSON.parse(raw) as Partial<PersistedBoardState>;
+            const parsed = JSON.parse(raw) as Partial<PersistedBoardStateV1>;
 
             if (parsed.version !== 1 || !Array.isArray(parsed.widgets)) {
                 return null;
@@ -593,10 +569,20 @@
 
             return {
                 version: 1,
-                theme: parsed.theme === "dark" ? "dark" : "light",
-                showGrid: Boolean(parsed.showGrid),
-                snapToGrid: Boolean(parsed.snapToGrid),
-                defaultLayout: Boolean(parsed.defaultLayout),
+                theme:
+                    parsed.theme === "dark"
+                        ? "dark"
+                        : parsed.board?.darkMode
+                          ? "dark"
+                          : "light",
+                board: {
+                    darkMode: parsed.board?.darkMode,
+                    showGrid: Boolean(parsed.board?.showGrid ?? parsed.showGrid),
+                    snapToGrid: Boolean(parsed.board?.snapToGrid ?? parsed.snapToGrid),
+                    defaultLayout: Boolean(
+                        parsed.board?.defaultLayout ?? parsed.defaultLayout,
+                    ),
+                },
                 widgets:
                     restoredWidgets.length > 0
                         ? restoredWidgets
@@ -608,7 +594,7 @@
         }
     }
 
-    function savePersistedBoardState(snapshot: PersistedBoardState) {
+    function savePersistedBoardState(snapshot: PersistedBoardStateV1) {
         try {
             window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
         } catch (error) {
@@ -616,23 +602,190 @@
         }
     }
 
-    function createPersistedBoardSnapshot(): PersistedBoardState {
-        return {
-            version: 1,
+    function createPersistedBoardSnapshot(): PersistedBoardStateV1 {
+        return createPersistedBoardState({
             theme,
             showGrid,
             snapToGrid,
             defaultLayout,
-            widgets: widgets.map((widget) => ({
-                ...widget,
-                stopwatchLaps: widget.stopwatchLaps
-                    ? [...widget.stopwatchLaps]
-                    : undefined,
-                trelsonPins: widget.trelsonPins
-                    ? { ...widget.trelsonPins }
-                    : undefined,
-            })),
-        };
+            widgets: cloneWidgetInstances(widgets),
+        });
+    }
+
+    function createPortableBoardSnapshot(): PortableBoardDocumentV1 {
+        return createPortableBoardDocument({
+            theme,
+            showGrid,
+            snapToGrid,
+            defaultLayout,
+            widgets: cloneWidgetInstances(widgets),
+            meta: {
+                exportedAt: new Date().toISOString(),
+            },
+        });
+    }
+
+    async function refreshBoardLibrary() {
+        if (typeof window === "undefined") return;
+
+        try {
+            boardLibraryItems = await listBoardLibraryItems();
+        } catch (error) {
+            console.warn("Failed to load board library", error);
+        }
+    }
+
+    async function saveCurrentBoard(kind: BoardLibraryItemV1["kind"]) {
+        if (typeof window === "undefined") return;
+
+        const suggestedName =
+            kind === "template"
+                ? `Mall ${new Date().toLocaleDateString("sv-SE")}`
+                : `Tavla ${new Date().toLocaleDateString("sv-SE")}`;
+        const name = window.prompt(
+            kind === "template"
+                ? "Namn på mallen:"
+                : "Namn på den sparade tavlan:",
+            suggestedName,
+        );
+
+        if (!name || !name.trim()) return;
+
+        try {
+            await saveBoardLibraryItem({
+                name: name.trim(),
+                kind,
+                board: createPortableBoardDocument({
+                    theme,
+                    showGrid,
+                    snapToGrid,
+                    defaultLayout,
+                    widgets: cloneWidgetInstances(widgets),
+                    meta: {
+                        name: name.trim(),
+                        exportedAt: new Date().toISOString(),
+                    },
+                }),
+            });
+            await refreshBoardLibrary();
+        } catch (error) {
+            console.warn("Failed to save board locally", error);
+            window.alert("Det gick inte att spara tavlan lokalt.");
+        }
+    }
+
+    function applyPortableBoard(document: PortableBoardDocumentV1) {
+        const missingWidgetTypes = getMissingWidgetTypes(
+            document,
+            enabledWidgetTypes,
+        );
+        const { width, height } = getBoardSize();
+        const restoredWidgets = document.widgets
+            .map((widget) => restoreWidgetInstance(widget, width, height))
+            .filter((widget): widget is WidgetInstance => widget !== null)
+            .sort((a, b) => a.z - b.z);
+
+        if (restoredWidgets.length === 0) {
+            window.alert(
+                "Den importerade tavlan innehöll inga widgets som stöds i den här varianten.",
+            );
+            return false;
+        }
+
+        widgets = restoredWidgets;
+        if (typeof document.board.darkMode === "boolean") {
+            theme = document.board.darkMode ? "dark" : "light";
+        }
+        setWidgetIdCounterFromWidgets(restoredWidgets);
+        showGrid = document.board.showGrid;
+        snapToGrid = document.board.snapToGrid;
+        defaultLayout = document.board.defaultLayout;
+        selectedWidgetId = null;
+        dragState = null;
+        resizeState = null;
+        addMenuOpen = false;
+        settingsOpen = false;
+        flushPersistedBoardState();
+
+        if (missingWidgetTypes.length > 0) {
+            const missingNames = missingWidgetTypes
+                .map((type) => widgetLabels[type] ?? type)
+                .join(", ");
+
+            window.alert(
+                `Tavlan importerades, men vissa widgets kunde inte visas i den här varianten: ${missingNames}.`,
+            );
+        }
+
+        return true;
+    }
+
+    function exportBoard() {
+        if (typeof window === "undefined") return;
+
+        const snapshot = createPortableBoardSnapshot();
+        const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
+            type: "application/json",
+        });
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        const dateStamp = new Date().toISOString().slice(0, 10);
+
+        anchor.href = url;
+        anchor.download = `lektionsvy-board-${dateStamp}.json`;
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+        window.URL.revokeObjectURL(url);
+    }
+
+    async function importBoard(file: File) {
+        try {
+            const raw = await file.text();
+            const parsed = JSON.parse(raw) as unknown;
+
+            if (!isPortableBoardDocumentV1(parsed)) {
+                window.alert("Filen verkar inte vara en giltig Lektionsvy-board.");
+                return;
+            }
+
+            applyPortableBoard(parsed);
+        } catch (error) {
+            console.warn("Failed to import board", error);
+            window.alert("Det gick inte att importera tavlan. Kontrollera att filen är giltig JSON.");
+        }
+    }
+
+    async function loadBoardFromLibrary(id: string) {
+        try {
+            const item = await getBoardLibraryItem(id);
+
+            if (!item) {
+                window.alert("Den sparade tavlan kunde inte hittas.");
+                await refreshBoardLibrary();
+                return;
+            }
+
+            applyPortableBoard(item.board);
+        } catch (error) {
+            console.warn("Failed to load board from library", error);
+            window.alert("Det gick inte att läsa den sparade tavlan.");
+        }
+    }
+
+    async function removeBoardFromLibrary(id: string) {
+        const item = boardLibraryItems.find((entry) => entry.id === id);
+        const label = item?.name ?? "den sparade tavlan";
+
+        if (!window.confirm(`Ta bort ${label}?`)) return;
+
+        try {
+            await deleteBoardLibraryItem(id);
+            await refreshBoardLibrary();
+        } catch (error) {
+            console.warn("Failed to delete board from library", error);
+            window.alert("Det gick inte att ta bort den sparade tavlan.");
+        }
     }
 
     function flushPersistedBoardState() {
@@ -1516,9 +1669,10 @@
 
             if (persistedState) {
                 theme = persistedState.theme;
-                showGrid = persistedState.showGrid || persistedState.snapToGrid;
-                snapToGrid = persistedState.snapToGrid;
-                defaultLayout = Boolean(persistedState.defaultLayout);
+                showGrid =
+                    persistedState.board.showGrid || persistedState.board.snapToGrid;
+                snapToGrid = persistedState.board.snapToGrid;
+                defaultLayout = persistedState.board.defaultLayout;
                 widgets = persistedState.widgets;
             } else {
                 defaultLayout = true;
@@ -1526,6 +1680,7 @@
             }
 
             setWidgetIdCounterFromWidgets(widgets);
+            refreshBoardLibrary();
             lastBoardSize = {
                 width: rect.width,
                 height: rect.height,
@@ -1640,6 +1795,13 @@
                 {theme}
                 {showGrid}
                 {snapToGrid}
+                libraryItems={boardLibraryItems}
+                onExportBoard={exportBoard}
+                onImportBoard={importBoard}
+                onSaveScreen={() => saveCurrentBoard("screen")}
+                onSaveTemplate={() => saveCurrentBoard("template")}
+                onLoadLibraryItem={loadBoardFromLibrary}
+                onDeleteLibraryItem={removeBoardFromLibrary}
                 onResetBoard={resetBoard}
                 onToggleTheme={toggleTheme}
                 onToggleShowGrid={toggleShowGrid}

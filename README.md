@@ -17,6 +17,7 @@ Se också [ROADMAP.md](/Users/varohlen/utveckling/lektionsvy-app/ROADMAP.md) fö
 Projektet är uppdelat i tre lager:
 
 - `src/routes/+page.svelte` är motorn som renderar tavlan, hanterar drag/resize, fullscreen och persistence.
+- `src/lib/board/` definierar det portabla boardformatet som ska kunna delas mellan olika brandade varianter.
 - `src/lib/variant/` styr appens beteende: vilka widgets som finns, deras defaults, startlayout och widgetspecifika startvärden.
 - `src/themes/` styr utseendet: färger, fonter, logotyper och annan branding.
 
@@ -49,6 +50,24 @@ Normalflödet för en ny widget är:
 3. Om en viss variant ska bete sig annorlunda, lägg bara den skillnaden i `src/lib/variant/default.ts`.
 
 På så sätt blir vanliga upstream-merges mellan core och brandade varianter betydligt smidigare.
+
+## Portabla Boards
+
+Boardstate håller på att brytas ut till ett eget portabelt format under
+`src/lib/board/`.
+
+Tanken är att:
+
+- samma board-JSON ska fungera i core och i brandade varianter
+- boardfilen ska vara agnostisk till skolans branding
+- varianten ska applicera färger, loggor och fonts ovanpå boardens innehåll
+- saknade widgettyper i en viss variant ska kunna varnas för utan att resten av boarden går sönder
+
+Det innebär i praktiken att export/import på sikt ska handla om boards, inte om teman.
+
+Boardlagret innehåller nu också en enkel `IndexedDB`-wrapper för lokala
+sparade tavlor och mallar. Tanken är att flera sparade screens/templates ska
+bygga på exakt samma portabla boardformat som export/import använder.
 
 ## Utveckling
 

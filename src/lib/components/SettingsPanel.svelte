@@ -1,11 +1,24 @@
 <script lang="ts">
     type Theme = "light" | "dark";
+    type LibraryItem = {
+        id: string;
+        name: string;
+        kind: "screen" | "template";
+        updatedAt: string;
+    };
 
     type Props = {
         open: boolean;
         theme: Theme;
         showGrid: boolean;
         snapToGrid: boolean;
+        libraryItems: LibraryItem[];
+        onExportBoard: () => void;
+        onImportBoard: (file: File) => void;
+        onSaveScreen: () => void;
+        onSaveTemplate: () => void;
+        onLoadLibraryItem: (id: string) => void;
+        onDeleteLibraryItem: (id: string) => void;
         onResetBoard: () => void;
         onToggleTheme: () => void;
         onToggleShowGrid: () => void;
@@ -17,11 +30,35 @@
         theme,
         showGrid,
         snapToGrid,
+        libraryItems,
+        onExportBoard,
+        onImportBoard,
+        onSaveScreen,
+        onSaveTemplate,
+        onLoadLibraryItem,
+        onDeleteLibraryItem,
         onResetBoard,
         onToggleTheme,
         onToggleShowGrid,
         onToggleSnapToGrid,
     }: Props = $props();
+
+    let importInput = $state<HTMLInputElement | null>(null);
+    const savedScreens = $derived(
+        libraryItems.filter((item) => item.kind === "screen"),
+    );
+    const savedTemplates = $derived(
+        libraryItems.filter((item) => item.kind === "template"),
+    );
+
+    function handleImportChange(event: Event) {
+        const input = event.currentTarget as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
+
+        onImportBoard(file);
+        input.value = "";
+    }
 </script>
 
 {#if open}
@@ -109,6 +146,42 @@
                 </div>
             </button>
 
+            <div class="action-grid">
+                <button class="theme-row action-row" type="button" onclick={onExportBoard}>
+                    <div class="theme-copy">
+                        <span>Board</span>
+                        <strong>Exportera tavla</strong>
+                    </div>
+                </button>
+
+                <button
+                    class="theme-row action-row"
+                    type="button"
+                    onclick={() => importInput?.click()}
+                >
+                    <div class="theme-copy">
+                        <span>Board</span>
+                        <strong>Importera tavla</strong>
+                    </div>
+                </button>
+            </div>
+
+            <div class="action-grid">
+                <button class="theme-row action-row" type="button" onclick={onSaveScreen}>
+                    <div class="theme-copy">
+                        <span>Lokalt</span>
+                        <strong>Spara tavla</strong>
+                    </div>
+                </button>
+
+                <button class="theme-row action-row" type="button" onclick={onSaveTemplate}>
+                    <div class="theme-copy">
+                        <span>Lokalt</span>
+                        <strong>Spara som mall</strong>
+                    </div>
+                </button>
+            </div>
+
             <button class="theme-row reset-row" type="button" onclick={onResetBoard}>
                 <div class="theme-copy">
                     <span>Tavla</span>
@@ -116,6 +189,84 @@
                 </div>
             </button>
         </div>
+
+        <div class="library-section">
+            <p class="panel-title">Sparat i webbläsaren</p>
+
+            {#if libraryItems.length === 0}
+                <p class="library-empty">
+                    Inga sparade tavlor än. Allt lagras lokalt i den här webbläsaren.
+                </p>
+            {:else}
+                {#if savedScreens.length > 0}
+                    <div class="library-group">
+                        <p class="library-group-title">Tavlor</p>
+                        <div class="library-list">
+                            {#each savedScreens as item}
+                                <div class="library-item">
+                                    <button
+                                        class="library-load"
+                                        type="button"
+                                        onclick={() => onLoadLibraryItem(item.id)}
+                                    >
+                                        <span class="library-name">{item.name}</span>
+                                        <span class="library-date">
+                                            {new Date(item.updatedAt).toLocaleDateString("sv-SE")}
+                                        </span>
+                                    </button>
+                                    <button
+                                        class="library-delete"
+                                        type="button"
+                                        aria-label={`Ta bort ${item.name}`}
+                                        onclick={() => onDeleteLibraryItem(item.id)}
+                                    >
+                                        Ta bort
+                                    </button>
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+                {/if}
+
+                {#if savedTemplates.length > 0}
+                    <div class="library-group">
+                        <p class="library-group-title">Mallar</p>
+                        <div class="library-list">
+                            {#each savedTemplates as item}
+                                <div class="library-item">
+                                    <button
+                                        class="library-load"
+                                        type="button"
+                                        onclick={() => onLoadLibraryItem(item.id)}
+                                    >
+                                        <span class="library-name">{item.name}</span>
+                                        <span class="library-date">
+                                            {new Date(item.updatedAt).toLocaleDateString("sv-SE")}
+                                        </span>
+                                    </button>
+                                    <button
+                                        class="library-delete"
+                                        type="button"
+                                        aria-label={`Ta bort ${item.name}`}
+                                        onclick={() => onDeleteLibraryItem(item.id)}
+                                    >
+                                        Ta bort
+                                    </button>
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+                {/if}
+            {/if}
+        </div>
+
+        <input
+            bind:this={importInput}
+            class="hidden-file-input"
+            type="file"
+            accept="application/json,.json"
+            onchange={handleImportChange}
+        />
     </div>
 {/if}
 
@@ -126,7 +277,9 @@
         left: 50%;
         transform: translateX(-50%);
         z-index: 19;
-        width: 20rem;
+        width: min(28rem, calc(100vw - 2rem));
+        max-height: calc(100vh - 6rem);
+        overflow-y: auto;
         padding: 1rem;
         border: 1px solid var(--border);
         border-radius: 0.85rem;
@@ -170,6 +323,12 @@
         display: grid;
         gap: 0.6rem;
         margin-top: 0.6rem;
+    }
+
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.6rem;
     }
 
     .theme-copy {
@@ -260,6 +419,96 @@
 
     .toggle-icon-right {
         right: 0.42rem;
+    }
+
+    .action-row {
+        justify-content: flex-start;
+    }
+
+    .hidden-file-input {
+        display: none;
+    }
+
+    .library-section {
+        display: grid;
+        gap: 0.6rem;
+        margin-top: 0.9rem;
+    }
+
+    .library-empty {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+
+    .library-group {
+        display: grid;
+        gap: 0.4rem;
+    }
+
+    .library-group-title {
+        margin: 0;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .library-list {
+        display: grid;
+        gap: 0.45rem;
+    }
+
+    .library-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+
+    .library-load,
+    .library-delete {
+        border: 1px solid var(--border);
+        border-radius: 0.6rem;
+        background: var(--surface-soft);
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease;
+    }
+
+    .library-load:hover,
+    .library-delete:hover {
+        background: color-mix(
+            in srgb,
+            var(--brand-primary-500) 8%,
+            var(--surface-soft)
+        );
+        border-color: color-mix(in srgb, var(--brand-primary-500) 22%, var(--border));
+    }
+
+    .library-load {
+        display: grid;
+        gap: 0.15rem;
+        padding: 0.7rem 0.85rem;
+        text-align: left;
+    }
+
+    .library-name {
+        font-size: 0.92rem;
+        font-weight: 700;
+    }
+
+    .library-date {
+        font-size: 0.78rem;
+        color: var(--muted);
+    }
+
+    .library-delete {
+        padding: 0.7rem 0.75rem;
+        white-space: nowrap;
     }
 
     .toggle-icon svg {
