@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fly } from "svelte/transition";
+
 	type Theme = 'light' | 'dark';
 
 	type Props = {
@@ -9,20 +11,22 @@
 		onToggleAddMenu: () => void;
 		onToggleSettings: () => void;
 		onToggleFullscreen: () => void;
+		onToggleTheme: () => void;
 	};
 
 	let {
-		theme: _theme,
+		theme,
 		addMenuOpen,
 		settingsOpen,
 		fullscreenActive,
 		onToggleAddMenu,
 		onToggleSettings,
-		onToggleFullscreen
+		onToggleFullscreen,
+		onToggleTheme
 	}: Props = $props();
 </script>
 
-<div class="dock">
+<div class="dock" transition:fly={{ y: 12, duration: 180 }}>
 	<button
 		class:active={addMenuOpen}
 		class="dock-button"
@@ -39,10 +43,32 @@
 	<span class="dock-divider"></span>
 
 	<button
+		class="dock-button theme-button"
+		type="button"
+		aria-label={theme === "light" ? "Byt till mörkt tema" : "Byt till ljust tema"}
+		onclick={onToggleTheme}
+	>
+		<span class="theme-icon" class:theme-icon--dark={theme === "dark"}>
+			{#if theme === "light"}
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<circle cx="12" cy="12" r="4" />
+					<path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77" />
+				</svg>
+			{:else}
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+				</svg>
+			{/if}
+		</span>
+	</button>
+
+	<span class="dock-divider"></span>
+
+	<button
 		class:active={settingsOpen}
 		class="dock-button"
 		type="button"
-		aria-label="Inställningar"
+		aria-label="Tavla"
 		onclick={onToggleSettings}
 	>
 		<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -51,7 +77,7 @@
 			/>
 			<circle cx="12" cy="12" r="2.7" />
 		</svg>
-		<span class="dock-label">Inställningar</span>
+		<span class="dock-label">Tavla</span>
 	</button>
 
 	<span class="dock-divider"></span>
@@ -112,12 +138,16 @@
 		font-size: 0.82rem;
 		font-weight: 600;
 		cursor: pointer;
-		transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+		transition: background 120ms ease, color 120ms ease, border-color 120ms ease, transform 80ms ease;
 	}
 
 	.dock-button:hover {
 		background: color-mix(in srgb, var(--text) 5%, transparent);
 		color: var(--text);
+	}
+
+	.dock-button:active {
+		transform: scale(0.96);
 	}
 
 	.dock-button.active {
@@ -139,5 +169,30 @@
 
 	.dock-label {
 		line-height: 1;
+	}
+
+	.theme-button {
+		padding: 0.5rem 0.55rem;
+	}
+
+	.theme-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		transition: transform 300ms ease;
+	}
+
+	.theme-icon--dark {
+		transform: rotate(-30deg);
+	}
+
+	.theme-icon svg {
+		width: 1.1rem;
+		height: 1.1rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		stroke-width: 1.8;
 	}
 </style>

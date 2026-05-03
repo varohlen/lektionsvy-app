@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { fly } from "svelte/transition";
+
     type Theme = "light" | "dark";
     type LibraryItem = {
         id: string;
@@ -62,142 +64,76 @@
 </script>
 
 {#if open}
-    <div class="panel settings-panel">
-        <p class="panel-title">Inställningar</p>
+    <div class="panel" transition:fly={{ y: 8, duration: 150 }}>
+        <p class="panel-title">Tavla</p>
 
-        <button class="theme-row" type="button" onclick={onToggleTheme}>
-            <div class="theme-copy">
-                <span>Tema</span>
-                <strong>{theme === "light" ? "Ljust" : "Mörkt"}</strong>
-            </div>
-
-            <div
-                class:active={theme === "dark"}
-                class="toggle-badge theme-toggle"
-                aria-hidden="true"
-            >
-                <span class="toggle-icon toggle-icon-left">
-                    <svg viewBox="0 0 24 24">
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="4"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        />
-                        <path
-                            d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-linecap="round"
-                            stroke-width="1.8"
-                        />
-                    </svg>
-                </span>
-                <span class="toggle-icon toggle-icon-right">
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.8"
-                        />
-                    </svg>
-                </span>
-                <span class="toggle-thumb"></span>
-            </div>
-        </button>
-
-        <div class="settings-group">
-            <button class="theme-row" type="button" onclick={onToggleShowGrid}>
-                <div class="theme-copy">
-                    <span>Precision</span>
-                    <strong>Visa rutnät</strong>
-                </div>
-
-                <div
-                    class:active={showGrid}
-                    class="toggle-badge"
-                    aria-hidden="true"
-                >
-                    <span class="toggle-thumb"></span>
-                </div>
-            </button>
-
-            <button
-                class="theme-row"
-                type="button"
-                onclick={onToggleSnapToGrid}
-            >
-                <div class="theme-copy">
-                    <span>Precision</span>
-                    <strong>Snap till rutnät</strong>
-                </div>
-
-                <div
-                    class:active={snapToGrid}
-                    class="toggle-badge"
-                    aria-hidden="true"
-                >
-                    <span class="toggle-thumb"></span>
-                </div>
-            </button>
-
-            <div class="action-grid">
-                <button class="theme-row action-row" type="button" onclick={onExportBoard}>
-                    <div class="theme-copy">
-                        <span>Board</span>
-                        <strong>Exportera tavla</strong>
-                    </div>
+        <div class="section">
+            <p class="section-label">Precision</p>
+            <div class="toggle-row-group">
+                <button class="toggle-row" type="button" onclick={onToggleShowGrid}>
+                    <span class="toggle-label">Visa rutnät</span>
+                    <span class="toggle-pill" class:active={showGrid}>
+                        <span class="toggle-thumb"></span>
+                    </span>
                 </button>
 
-                <button
-                    class="theme-row action-row"
-                    type="button"
-                    onclick={() => importInput?.click()}
-                >
-                    <div class="theme-copy">
-                        <span>Board</span>
-                        <strong>Importera tavla</strong>
-                    </div>
+                <button class="toggle-row" type="button" onclick={onToggleSnapToGrid}>
+                    <span class="toggle-label">Snap till rutnät</span>
+                    <span class="toggle-pill" class:active={snapToGrid}>
+                        <span class="toggle-thumb"></span>
+                    </span>
                 </button>
             </div>
-
-            <div class="action-grid">
-                <button class="theme-row action-row" type="button" onclick={onSaveScreen}>
-                    <div class="theme-copy">
-                        <span>Lokalt</span>
-                        <strong>Spara tavla</strong>
-                    </div>
-                </button>
-
-                <button class="theme-row action-row" type="button" onclick={onSaveTemplate}>
-                    <div class="theme-copy">
-                        <span>Lokalt</span>
-                        <strong>Spara som mall</strong>
-                    </div>
-                </button>
-            </div>
-
-            <button class="theme-row reset-row" type="button" onclick={onResetBoard}>
-                <div class="theme-copy">
-                    <span>Tavla</span>
-                    <strong>Återställ tavla</strong>
-                </div>
-            </button>
         </div>
 
-        <div class="library-section">
-            <p class="panel-title">Sparat i webbläsaren</p>
+        <div class="section">
+            <p class="section-label">Spara & Dela</p>
+            <div class="action-grid">
+                <button class="action-btn" type="button" onclick={onSaveScreen}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                    <span>Spara tavla</span>
+                </button>
 
-            {#if libraryItems.length === 0}
-                <p class="library-empty">
-                    Inga sparade tavlor än. Allt lagras lokalt i den här webbläsaren.
+                <button class="action-btn" type="button" onclick={onSaveTemplate}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <line x1="3" y1="9" x2="21" y2="9" />
+                        <line x1="9" y1="21" x2="9" y2="9" />
+                    </svg>
+                    <span>Spara som mall</span>
+                </button>
+
+                <button class="action-btn" type="button" onclick={onExportBoard}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <span>Exportera</span>
+                </button>
+
+                <button class="action-btn" type="button" onclick={() => importInput?.click()}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span>Importera</span>
+                </button>
+            </div>
+        </div>
+
+        {#if libraryItems.length > 0}
+            <div class="section">
+                <p class="section-label">
+                    Bibliotek
+                    <span class="section-count">{libraryItems.length}</span>
                 </p>
-            {:else}
+
                 {#if savedScreens.length > 0}
                     <div class="library-group">
                         <p class="library-group-title">Tavlor</p>
@@ -220,7 +156,10 @@
                                         aria-label={`Ta bort ${item.name}`}
                                         onclick={() => onDeleteLibraryItem(item.id)}
                                     >
-                                        Ta bort
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <polyline points="3 6 5 6 21 6" />
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                        </svg>
                                     </button>
                                 </div>
                             {/each}
@@ -250,14 +189,34 @@
                                         aria-label={`Ta bort ${item.name}`}
                                         onclick={() => onDeleteLibraryItem(item.id)}
                                     >
-                                        Ta bort
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <polyline points="3 6 5 6 21 6" />
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                        </svg>
                                     </button>
                                 </div>
                             {/each}
                         </div>
                     </div>
                 {/if}
-            {/if}
+            </div>
+        {:else}
+            <div class="section">
+                <p class="section-label">Bibliotek</p>
+                <p class="library-empty">
+                    Inga sparade tavlor. Allt lagras lokalt i webbläsaren.
+                </p>
+            </div>
+        {/if}
+
+        <div class="section section--danger">
+            <button class="reset-btn" type="button" onclick={onResetBoard}>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                <span>Rensa tavla</span>
+            </button>
         </div>
 
         <input
@@ -277,10 +236,10 @@
         left: 50%;
         transform: translateX(-50%);
         z-index: 19;
-        width: min(28rem, calc(100vw - 2rem));
+        width: min(26rem, calc(100vw - 2rem));
         max-height: calc(100vh - 6rem);
         overflow-y: auto;
-        padding: 1rem;
+        padding: 1rem 1.1rem;
         border: 1px solid var(--border);
         border-radius: 0.85rem;
         background: var(--surface);
@@ -288,7 +247,7 @@
     }
 
     .panel-title {
-        margin: 0 0 0.75rem;
+        margin: 0 0 0.85rem;
         font-size: 0.78rem;
         font-weight: 700;
         color: var(--muted);
@@ -296,242 +255,283 @@
         letter-spacing: 0.06em;
     }
 
-    .theme-row {
+    .section {
+        padding: 0.75rem 0;
+        border-top: 1px solid var(--border);
+    }
+
+    .section:first-of-type {
+        border-top: none;
+        padding-top: 0;
+    }
+
+    .section--danger {
+        padding-bottom: 0;
+    }
+
+    .section-label {
+        margin: 0 0 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .section-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.2rem;
+        height: 1.2rem;
+        padding: 0 0.3rem;
+        border-radius: 0.25rem;
+        font-size: 0.65rem;
+        font-weight: 700;
+        background: color-mix(in srgb, var(--text) 8%, transparent);
+        color: var(--muted);
+    }
+
+    .toggle-row-group {
+        display: grid;
+        gap: 0.4rem;
+    }
+
+    .toggle-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
         width: 100%;
-        padding: 0.7rem 0.85rem;
+        padding: 0.55rem 0.7rem;
         border: 1px solid var(--border);
-        border-radius: 0.6rem;
+        border-radius: 0.5rem;
         background: var(--surface-soft);
         color: var(--text);
         font: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
         cursor: pointer;
         transition: background 120ms ease;
     }
 
-    .theme-row:hover {
-        background: color-mix(
-            in srgb,
-            var(--brand-primary-500) 8%,
-            var(--surface-soft)
-        );
+    .toggle-row:hover {
+        background: color-mix(in srgb, var(--brand-primary-500) 6%, var(--surface-soft));
     }
 
-    .settings-group {
-        display: grid;
-        gap: 0.6rem;
-        margin-top: 0.6rem;
+    .toggle-label {
+        line-height: 1;
     }
 
-    .action-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.6rem;
-    }
-
-    .theme-copy {
-        display: grid;
-        gap: 0.2rem;
-        text-align: left;
-    }
-
-    .theme-copy span {
-        font-size: 0.88rem;
-        color: var(--muted);
-    }
-
-    .toggle-badge {
-        --toggle-width: 2.8rem;
-        --toggle-height: 1.7rem;
-        --toggle-padding: 0.15rem;
-        --toggle-thumb-size: 1.2rem;
+    .toggle-pill {
+        --pill-width: 2.4rem;
+        --pill-height: 1.4rem;
+        --pill-padding: 0.15rem;
+        --thumb-size: 1rem;
 
         position: relative;
         display: inline-flex;
         align-items: center;
-        width: var(--toggle-width);
-        height: var(--toggle-height);
-        padding: var(--toggle-padding);
-        border-radius: 0.5rem;
-        background: color-mix(in srgb, var(--text) 10%, transparent);
+        width: var(--pill-width);
+        height: var(--pill-height);
+        padding: var(--pill-padding);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--text) 12%, transparent);
         transition: background 140ms ease;
+    }
+
+    .toggle-pill.active {
+        background: color-mix(in srgb, var(--brand-primary-500) 40%, var(--surface-soft));
     }
 
     .toggle-thumb {
         display: block;
-        width: var(--toggle-thumb-size);
-        height: var(--toggle-thumb-size);
-        border-radius: 0.35rem;
+        width: var(--thumb-size);
+        height: var(--thumb-size);
+        border-radius: 999px;
         background: var(--surface);
-        box-shadow: 0 1px 4px color-mix(in srgb, var(--text) 14%, transparent);
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--text) 12%, transparent);
         transform: translateX(0);
         transition: transform 140ms ease;
     }
 
-    .toggle-badge.active {
-        background: color-mix(
-            in srgb,
-            var(--brand-primary-500) 34%,
-            var(--surface-soft)
-        );
+    .toggle-pill.active .toggle-thumb {
+        transform: translateX(calc(var(--pill-width) - var(--thumb-size) - var(--pill-padding) * 2));
     }
 
-    .toggle-badge.active .toggle-thumb {
-        transform: translateX(
-            calc(
-                var(--toggle-width) - (var(--toggle-padding) * 2) -
-                    var(--toggle-thumb-size) + 0.16rem
-            )
-        );
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.4rem;
     }
 
-    .theme-toggle {
-        background: color-mix(in srgb, var(--text) 10%, transparent);
-    }
-
-    .theme-toggle.active {
-        background: color-mix(
-            in srgb,
-            var(--brand-primary-500) 34%,
-            var(--surface-soft)
-        );
-    }
-
-    .toggle-icon {
-        position: absolute;
-        top: 50%;
-        display: inline-flex;
+    .action-btn {
+        display: flex;
         align-items: center;
-        justify-content: center;
-        width: 0.85rem;
-        height: 0.85rem;
-        color: color-mix(in srgb, var(--text) 62%, transparent);
-        transform: translateY(-50%);
-        pointer-events: none;
-        z-index: 0;
+        gap: 0.4rem;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        background: var(--surface-soft);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease;
     }
 
-    .toggle-icon-left {
-        left: 0.42rem;
+    .action-btn:hover {
+        background: color-mix(in srgb, var(--brand-primary-500) 8%, var(--surface-soft));
+        border-color: color-mix(in srgb, var(--brand-primary-500) 22%, var(--border));
     }
 
-    .toggle-icon-right {
-        right: 0.42rem;
+    .action-btn:active {
+        transform: scale(0.97);
     }
 
-    .action-row {
-        justify-content: flex-start;
+    .action-btn svg {
+        width: 0.95rem;
+        height: 0.95rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.8;
+        flex-shrink: 0;
+        color: var(--muted);
     }
 
     .hidden-file-input {
         display: none;
     }
 
-    .library-section {
-        display: grid;
-        gap: 0.6rem;
-        margin-top: 0.9rem;
-    }
-
-    .library-empty {
-        margin: 0;
-        color: var(--muted);
-        font-size: 0.88rem;
-        line-height: 1.45;
-    }
-
     .library-group {
-        display: grid;
-        gap: 0.4rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .library-group:last-child {
+        margin-bottom: 0;
     }
 
     .library-group-title {
-        margin: 0;
-        font-size: 0.72rem;
+        margin: 0 0 0.35rem;
+        font-size: 0.68rem;
         font-weight: 700;
         color: var(--muted);
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
         text-transform: uppercase;
     }
 
     .library-list {
         display: grid;
-        gap: 0.45rem;
+        gap: 0.35rem;
     }
 
     .library-item {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.5rem;
+        grid-template-columns: 1fr auto;
+        gap: 0.35rem;
         align-items: stretch;
-    }
-
-    .library-load,
-    .library-delete {
-        border: 1px solid var(--border);
-        border-radius: 0.6rem;
-        background: var(--surface-soft);
-        color: var(--text);
-        font: inherit;
-        cursor: pointer;
-        transition: background 120ms ease, border-color 120ms ease;
-    }
-
-    .library-load:hover,
-    .library-delete:hover {
-        background: color-mix(
-            in srgb,
-            var(--brand-primary-500) 8%,
-            var(--surface-soft)
-        );
-        border-color: color-mix(in srgb, var(--brand-primary-500) 22%, var(--border));
     }
 
     .library-load {
         display: grid;
-        gap: 0.15rem;
-        padding: 0.7rem 0.85rem;
+        gap: 0.1rem;
+        padding: 0.5rem 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        background: var(--surface-soft);
+        color: var(--text);
+        font: inherit;
         text-align: left;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease;
+    }
+
+    .library-load:hover {
+        background: color-mix(in srgb, var(--brand-primary-500) 8%, var(--surface-soft));
+        border-color: color-mix(in srgb, var(--brand-primary-500) 22%, var(--border));
     }
 
     .library-name {
-        font-size: 0.92rem;
-        font-weight: 700;
+        font-size: 0.88rem;
+        font-weight: 600;
     }
 
     .library-date {
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         color: var(--muted);
     }
 
     .library-delete {
-        padding: 0.7rem 0.75rem;
-        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 0.6rem;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        background: var(--surface-soft);
+        color: var(--muted);
+        cursor: pointer;
+        transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
     }
 
-    .toggle-icon svg {
+    .library-delete:hover {
+        background: color-mix(in srgb, #e53e3e 8%, var(--surface-soft));
+        border-color: color-mix(in srgb, #e53e3e 30%, var(--border));
+        color: #e53e3e;
+    }
+
+    .library-delete svg {
+        width: 0.9rem;
+        height: 0.9rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.8;
+    }
+
+    .library-empty {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.84rem;
+        line-height: 1.45;
+    }
+
+    .reset-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
         width: 100%;
-        height: 100%;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid color-mix(in srgb, #e53e3e 20%, var(--border));
+        border-radius: 0.5rem;
+        background: color-mix(in srgb, #e53e3e 4%, var(--surface-soft));
+        color: var(--text);
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease;
     }
 
-    .theme-toggle.active .toggle-icon-right,
-    .theme-toggle:not(.active) .toggle-icon-left {
-        color: color-mix(in srgb, var(--text) 88%, transparent);
+    .reset-btn:hover {
+        background: color-mix(in srgb, #e53e3e 10%, var(--surface-soft));
+        border-color: color-mix(in srgb, #e53e3e 35%, var(--border));
     }
 
-    .theme-toggle .toggle-thumb {
-        position: relative;
-        z-index: 1;
-        background: color-mix(in srgb, var(--surface) 82%, white 18%);
-    }
-
-    :global(.screen-shell[data-theme="dark"]) .theme-toggle .toggle-thumb {
-        background: color-mix(in srgb, var(--surface-soft) 88%, white 12%);
-    }
-
-    .reset-row {
-        justify-content: flex-start;
+    .reset-btn svg {
+        width: 0.9rem;
+        height: 0.9rem;
+        fill: none;
+        stroke: #e53e3e;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.8;
+        flex-shrink: 0;
     }
 </style>

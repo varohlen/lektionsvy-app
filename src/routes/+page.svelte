@@ -1788,6 +1788,7 @@
                 onToggleAddMenu={toggleAddMenu}
                 onToggleSettings={toggleSettings}
                 onToggleFullscreen={toggleFullscreen}
+                onToggleTheme={toggleTheme}
             />
             <AddWidgetMenu open={addMenuOpen} entries={widgetMenuEntries} />
             <SettingsPanel
